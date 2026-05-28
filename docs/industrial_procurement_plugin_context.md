@@ -402,4 +402,6 @@ Quando si pianifica un sprint o una feature su questo repository, porsi queste d
 ## 10. Riferimenti incrociati
 
 - Repository fratello `industrial-mcp` (https://github.com/fed3c3sa/industrial-data-mcp) : vedi `docs/industrial_procurement_context.md` per architettura backend, scelte di DB, principi ship-first generali del progetto.
+- PDF di marketing `docs/shared/intelligence_pregara_italia.pdf`: value proposition, sorgenti reali, esempi.
+
 - Marketplace Claude Code: documentazione ufficiale Anthropic per submission, manifest, struttura plugin.
