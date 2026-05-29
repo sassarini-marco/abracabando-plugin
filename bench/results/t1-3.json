@@ -1,0 +1,21 @@
+{
+  "id": "t1-3",
+  "tier": 1,
+  "title": "OpenCoesione — FESR 2021-2027 FVG",
+  "elapsed_s": 22.7,
+  "timed_out": false,
+  "cost_usd": 0.23515875,
+  "mcp_tools_fired": [
+    "opencoesione_search_projects"
+  ],
+  "n_tool_calls": 2,
+  "required_fields": [
+    "conteggio progetti",
+    "totale finanziato",
+    "totale impegnato",
+    "totale pagato",
+    "top 5 beneficiari"
+  ],
+  "answer": "Ecco il quadro completo dei progetti **FESR 2021-2027 in Friuli-Venezia Giulia** su OpenCoesione.\n\n## Totali (2.436 progetti)\n\n| Voce | Importo |\n|---|---:|\n| **Totale finanziato** | € 580.697.473,96 |\n| **Totale impegnato** | € 256.485.696,38 |\n| **Totale pagato** | € 114.489.490,77 |\n\n- Impegnato sul finanziato: **44,2%**\n- Pagato sul finanziato: **19,7%** (pagato sull'impegnato: 44,6%)\n\n## Top 5 beneficiari per importo finanziato\n\n| # | Beneficiario | CF | Finanziato | N. progetti |\n|---|---|---|---:|---:|\n| 1 | Regione Autonoma Friuli-Venezia Giulia | 80014930327 | € 38.182.395,07 | 25 |\n| 2 | Regione Friuli-Venezia Giulia | 80014930327 | € 23.002.714,78 | 9 |\n| 3 | Ente di Decentramento Regionale di Gorizia | 91047140313 | € 19.500.000,00 | 2 |\n| 4 | Ente di Decentramento Regionale di Udine | 94150810300 | € 14.600.000,00 | 2 |\n| 5 | Comune di Udine | 00168650307 | € 8.375.273,00 | 8 |\n\n**Nota:** le voci 1 e 2 condividono lo stesso codice fiscale (80014930327) — sono la stessa amministrazione regionale registrata con due denominazioni diverse. Sommate, la Regione vale **€ 61.185.109,85 su 34 progetti**, di gran lunga il primo beneficiario.\n\n## Provenienza dei dati\n- **Dataset:** `progetti_esteso_2021-2027.parquet` (bulk OpenCoesione, pubblicazione bimestrale con ~3 mesi di ritardo)\n- **Campi:** finanziato = `OC_FINANZ_TOT_PUB_NETTO` · impegnato = `OC_IMPEGNI_COESIONE` · pagato = `OC_TOT_PAGAMENTI_BENEFICIARI`\n- Filtri applicati: ciclo 2021-2027, regione *Friuli* (`DEN_REGIONE`), fondo *FESR* (`FONDO_COMUNITARIO`)\n\nVuoi che approfondisca un singolo beneficiario, scomponga per tema/settore, o riconcili qualche CUP con ANAC/PNRR?",
+  "stderr_tail": ""
+}

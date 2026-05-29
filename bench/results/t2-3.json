@@ -1,0 +1,25 @@
+{
+  "id": "t2-3",
+  "tier": 2,
+  "title": "Gruppo Fincantieri — due P.IVA aggregate",
+  "elapsed_s": 60.2,
+  "timed_out": false,
+  "cost_usd": 0.37701900000000005,
+  "mcp_tools_fired": [
+    "anac_awards_by_piva",
+    "anac_awards_by_piva",
+    "opencoesione_search_projects",
+    "opencoesione_search_projects",
+    "anac_awards_by_piva",
+    "anac_search_awards"
+  ],
+  "n_tool_calls": 8,
+  "required_fields": [
+    "aggiudicazioni Fincantieri SpA",
+    "aggiudicazioni Fincantieri Infrastructure",
+    "progetti OpenCoesione",
+    "output di gruppo aggregato"
+  ],
+  "answer": "Ecco l'output combinato di gruppo. Una nota metodologica importante prima dei dati.\n\n## ⚠️ Copertura dati (leggere prima)\n- **ANAC**: lo snapshot in cache è quello mensile del **2026-05-01** e copre la finestra recente delle aggiudicazioni, **non** l'intero archivio storico a 24 mesi. Quindi \"ultimi 24 mesi\" è limitato a ciò che è presente nello snapshot (di fatto le aggiudicazioni più recenti). Per copertura completa 2024→2026 servirebbero più snapshot annuali.\n- **Match per P.IVA vs Codice Fiscale**: Fincantieri S.p.A. risulta nelle tabelle ANAC con il **CF 00397130584**, non con la P.IVA 00629440322 (che dà 0 risultati). Ho quindi interrogato entrambi.\n- **OpenCoesione**: pubblicazione bimestrale con ~3 mesi di ritardo.\n\n---\n\n## 🏢 Fincantieri S.p.A. — capogruppo\nP.IVA 00629440322 · CF 00397130584 · sede Trieste\n\n**Aggiudicazioni ANAC (come aggiudicataria, finestra snapshot)**\n| CIG | Stazione appaltante | Oggetto | Importo aggiud. | Data | CPV |\n|---|---|---|---|---|---|\n| BB48B24F71 | Tecnocasic S.p.A. (CA) | Configurazione pannello/computer sistema controllo turbina | € 5.870 | 2026-04-16 | 30211400-5 |\n| BB6FAFD032 | Tecnocasic S.p.A. (CA) | Manutenzione turbogeneratore | importo non valorizzato (base € 25.800) | 2026-04-28 | 42112000-7 |\n\n→ **Totale aggiudicato capogruppo: € 5.870** (2 CIG; il secondo senza importo aggiudicato registrato).\n*Nota: in `anac_search_awards` compaiono altre gare che citano \"Fincantieri\" nell'oggetto ma sono vinte da terzi (es. Pellegrini S.p.A. mensa stabilimento Riva Trigoso, incarico legale So.Re.Sa.) — escluse perché Fincantieri non è l'aggiudicataria.*\n\n**Progetti OpenCoesione (beneficiario: FINCANTIERI S.P.A., CF 00397130584)**\n| CUP | Ciclo | Regione | Fondo | Finanziato | Pagato | Stato |\n|---|---|---|---|---|---|---|\n| G19J23001850009 | 2021-2027 | Liguria | FESR | € 963.663,34 | € 770.930,68 | In esecuzione |\n| G38I16000080007 | 2014-2020 | Liguria | FESR | € 345.465,03 | € 345.465,03 | Eseguito |\n\nPermalink: `opencoesione.gov.it/it/progetti/G19J23001850009` · `.../G38I16000080007`\n→ **Totale finanziato OpenCoesione capogruppo: € 1.309.128,37**\n\n---\n\n## 🏗️ Fincantieri Infrastructure S.p.A. — controllata (infrastrutture)\nP.IVA 01294560329\n\n**Aggiudicazioni ANAC**\n| CIG | Stazione appaltante | Oggetto | Importo aggiud. | Ribasso | Data | CPV |\n|---|---|---|---|---|---|---|\n| B2D2997EA1 | **ANAS S.p.A.** | Lotto 2 – Stralcio 2 Lotto 1: da Catanzaro (km 0+000) a sv. Uria (km 7+500 ca) | **€ 424.646.306,54** | 4,60% (base € 445.102.058,57) | 2025-05-23 | 45233120-6 (costruzione strade) |\n\n→ **Totale aggiudicato controllata: € 424.646.306,54** (1 CIG, provincia Catanzaro).\n\n**Progetti OpenCoesione**: nessun progetto trovato con beneficiario Fincantieri Infrastructure (la ricerca \"Fincantieri\" su OpenCoesione restituisce solo la capogruppo).\n\n---\n\n## 📊 Output combinato di gruppo (capogruppo + controllata)\n\n| Metrica | Fincantieri S.p.A. | Fincantieri Infrastructure | **Gruppo (combinato)** |\n|---|---|---:|---:|\n| Aggiudicazioni ANAC (n. CIG) | 2 | 1 | **3** |\n| Valore aggiudicato ANAC | € 5.870 | € 424.646.306,54 | **€ 424.652.176,54** |\n| Progetti OpenCoesione (n.) | 2 | 0 | **2** |\n| Finanziamento OpenCoesione | € 1.309.128,37 | — | **€ 1.309.128,37** |\n\n**Lettura sintetica**\n- Il valore di gruppo è interamente trainato dalla **controllata infrastrutture** (commessa ANAS S.S. 106 Jonica in Calabria, € 424,6 mln, maggio 2025): ~99,99% del valore aggiudicato di gruppo.\n- La **capogruppo** in questa finestra ANAC appare solo come fornitore di micro-importi su impianti turbina (Sardegna), coerente con la natura industriale/cantieristica del business (la maggior parte dei suoi ricavi non passa da gare pubbliche italiane come *aggiudicataria*).\n- L'esposizione su **fondi coesione** è modesta e tutta sulla capogruppo (2 progetti FESR Liguria, ~€ 1,3 mln).\n\nVuoi che (a) recuperi i **CIG collegati al CUP** dei progetti OpenCoesione per riconciliare gare↔progetti, (b) verifichi i **PIN/TED** o i progetti **PNRR** del gruppo, o (c) faccia il drill-down della commessa ANAS (`anac_award_detail` su CIG B2D2997EA1)?",
+  "stderr_tail": ""
+}

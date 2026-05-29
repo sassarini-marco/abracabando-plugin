@@ -1,0 +1,17 @@
+{
+  "name": "industrial-procurement-local",
+  "owner": {
+    "name": "Federico Cesarini & Marco Sassarini",
+    "email": "mail.fede.cesarini@gmail.com"
+  },
+  "metadata": {
+    "description": "Local marketplace for the industrial-procurement Claude Code plugin (Italian public-spending intelligence)."
+  },
+  "plugins": [
+    {
+      "name": "industrial-procurement",
+      "source": "./",
+      "description": "Natural-language access to the Italian public spending ecosystem (ANAC, TED, OpenCoesione, OpenPNRR). 5 skills + the industrial-mcp server."
+    }
+  ]
+}
