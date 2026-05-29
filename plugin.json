@@ -1,0 +1,9 @@
+{
+  "name": "industrial-procurement",
+  "version": "0.1.0",
+  "description": "Natural-language access to the Italian public spending ecosystem. Query ANAC, TED, OpenCoesione, OpenPNRR, and regional planning datasets; receive professional-quality Italian-language outputs with full provenance.",
+  "author": "marco.sassarini@tinextainnovationhub.com",
+  "license": "MIT",
+  "skills": "skills/",
+  "minServerVersion": "0.1.0"
+}

@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "industrial-mcp-free": {
+      "type": "stdio",
+      "command": "industrial-mcp",
+      "args": []
+    },
+    "industrial-mcp-pro": {
+      "type": "streamable-http",
+      "url": "${INDUSTRIAL_MCP_PRO_URL:-https://api.industrial-mcp.io}/mcp",
+      "headersHelper": "printf '{\"Authorization\":\"Bearer %s\"}' \"${INDUSTRIAL_MCP_PRO_TOKEN}\""
+    }
+  }
+}
