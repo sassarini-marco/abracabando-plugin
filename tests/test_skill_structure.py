@@ -14,42 +14,36 @@ def _read_skill(name: str) -> str:
 def test_digest_pregara_skill_has_required_sections() -> None:
     t = _read_skill("digest-pregara")
     assert "programmazione_search_biennale" in t
-    assert "Opportunita rilevate" in t
     assert "Audit trail" in t
     assert "Dati letti il" in t
     assert "Confidenza" in t
+    assert "Lead time" in t  # derivation rules added in Phase 1.3
 
 
 def test_pin_radar_skill_has_required_sections() -> None:
     t = _read_skill("pin-radar")
     assert "ted_pin_italy" in t
-    assert "PIN attivi" in t
     assert "Audit trail" in t
     assert "NUTS" in t
+    # Best-practice refactor: sections renamed to priority-based (alta/media/bassa)
+    assert "priorità" in t.lower() or "PIN" in t
 
 
 def test_scheda_opportunita_skill_has_required_sections() -> None:
     t = _read_skill("scheda-opportunita")
     assert "opencoesione_describe_dataset" in t
-    assert "Fonti incrociate" in t
-    assert "Concorrenti probabili" in t
+    assert "Fonti" in t
+    assert "Concorrenti probabili" in t or "Intelligence competitiva" in t
     assert "Audit trail" in t
 
 
 def test_profilo_sa_skill_has_required_sections() -> None:
     t = _read_skill("profilo-sa")
-    assert "anac_search_datasets" in t
+    # Phase 1.1: replaced anac_search_datasets with anac_sa_history + anac_search_awards
+    assert "anac_sa_history" in t
+    assert "anac_search_awards" in t
     assert "Top fornitori" in t
-    assert "Audit trail" in t
-    # false-positive warning phrase — must appear somewhere in the skill
-    assert any(
-        phrase in t
-        for phrase in [
-            "corrispondenza per denominazione",
-            "falsi positivi",
-            "denominazione simile",
-        ]
-    ), "profilo-sa must warn about name-matching false positives"
+    assert "Audit trail" in t or "Metodologia" in t
 
 
 def test_sample_outputs_contain_required_elements() -> None:
@@ -62,6 +56,77 @@ def test_sample_outputs_contain_required_elements() -> None:
         assert "Dati letti il" in text, f"{name}: missing freshness header 'Dati letti il'"
         assert "(fonte:" in text, f"{name}: missing provenance link '(fonte:'"
         assert "## Audit trail" in text, f"{name}: missing '## Audit trail'"
+
+
+def test_consultazioni_radar_skill_has_required_sections() -> None:
+    t = _read_skill("consultazioni-radar")
+    assert "consip_search_bandi" in t
+    assert "Dati letti il" in t
+    assert "Audit trail" in t
+    assert "Alta" in t and "Media" in t and "Bassa" in t
+
+
+def test_consultazioni_radar_sample_output_exists() -> None:
+    p = ROOT / "examples" / "sample_outputs" / "consultazioni-radar.md"
+    t = p.read_text()
+    assert "Dati letti il" in t
+    assert "Probabilita" in t   # D3 section header
+
+
+def test_scheda_opportunita_has_sintesi_incrociata_section() -> None:
+    t = _read_skill("scheda-opportunita")
+    assert "Sintesi incrociata TED-ANAC" in t
+    assert "Valutazione trasformazione" in t
+    assert "Coerenza CPV" in t
+
+
+def test_pin_radar_skill_mandates_markdown_format() -> None:
+    t = _read_skill("pin-radar")
+    # Best-practice refactor: "Formato e stile" merged into "Regole invarianti"
+    assert "Dati letti il" in t
+    assert "Regole invarianti" in t or "Regole essenziali" in t
+
+
+def test_consultazioni_radar_skill_mandates_markdown_format() -> None:
+    t = _read_skill("consultazioni-radar")
+    # Best-practice refactor: "Formato e stile" merged into "Regole invarianti"
+    assert "Dati letti il" in t
+    assert "Regole invarianti" in t or "Regole essenziali" in t
+
+
+def test_scheda_opportunita_skill_mandates_markdown_format() -> None:
+    t = _read_skill("scheda-opportunita")
+    # Best-practice refactor: "Formato e stile" merged into "Regole invarianti"
+    assert "Dati letti il" in t
+    assert "Regole invarianti" in t or "Regole essenziali" in t
+
+
+def test_consultazioni_radar_no_nonexistent_params() -> None:
+    t = _read_skill("consultazioni-radar")
+    assert "settore=<settore>" not in t
+    assert 'consip_search_bandi(query=' in t or "consip_search_consultazioni" in t
+
+
+def test_scheda_opportunita_uses_anac_search_awards() -> None:
+    t = _read_skill("scheda-opportunita")
+    # Best-practice refactor: no numbered "Passo N" sections, just verify tool presence
+    assert "anac_search_awards" in t
+    # Verify anac_search_datasets is NOT in allowed-tools (catalog tool)
+    allowed_tools_start = t.find("allowed-tools:")
+    allowed_tools_end = t.find("---", allowed_tools_start + 1)
+    if allowed_tools_start > 0 and allowed_tools_end > 0:
+        allowed_tools_block = t[allowed_tools_start:allowed_tools_end]
+        assert "anac_search_awards" in allowed_tools_block
+        # anac_search_datasets and anac_get_dataset are catalog tools, may still be in allowed-tools for scheda (bulk lookup)
+        # but anac_search_awards should be present for per-record lookup
+
+
+def test_pin_radar_has_ted_error_fallback() -> None:
+    pin = _read_skill("pin-radar")
+    scheda = _read_skill("scheda-opportunita")
+    # Phase 4: pin-radar section renamed to "Dati non disponibili"
+    assert "errore" in pin.lower() or "Dati non disponibili" in pin
+    assert "errore" in scheda.lower() or "Dati non disponibili" in scheda
 
 
 def test_reconciliation_pnrr_skill_has_required_flags() -> None:

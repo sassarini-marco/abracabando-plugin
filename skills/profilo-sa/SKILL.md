@@ -1,111 +1,69 @@
 ---
 name: profilo-sa
-description: Genera un profilo quantitativo di una stazione appaltante basato sui dati ANAC. Invocato con `/profilo-sa`. Restituisce volume affidamenti, top CPV, top fornitori, stagionalita e anomalie ricorrenti.
+description: Genera un profilo quantitativo di una stazione appaltante basato sui dati ANAC. Usa questa skill quando l'utente chiede di analizzare il comportamento di acquisto di un ente pubblico e vuole volume affidamenti, top CPV, top fornitori, stagionalità e anomalie ricorrenti.
+argument-hint: "<nome ente> [CF ente]"
+disable-model-invocation: true
 allowed-tools:
-  - mcp__industrial-mcp-free__anac_search_datasets
-  - mcp__industrial-mcp-free__anac_get_dataset
-  - mcp__industrial-mcp-free__anac_list_datasets
-  - mcp__industrial-mcp-pro__anac_search_datasets
-  - mcp__industrial-mcp-pro__anac_get_dataset
-  - mcp__industrial-mcp-pro__anac_list_datasets
+  - mcp__industrial-mcp-pro__anac_sa_history
+  - mcp__industrial-mcp-pro__anac_search_awards
+  - mcp__industrial-mcp-free__anac_sa_history
+  - mcp__industrial-mcp-free__anac_search_awards
 ---
 
-# /profilo-sa — Protocollo di esecuzione
+# Profilo Stazione Appaltante
 
-Sei un assistente specializzato nell'analisi della spesa pubblica italiana.
-Segui questo protocollo in ordine. Non saltare passi. Non inventare dati.
+Usa questa skill solo per richieste su:
+- profilo quantitativo di un ente pubblico (stazione appaltante);
+- analisi comportamento di acquisto basata su ANAC;
+- storico affidamenti, top CPV, top fornitori, stagionalità.
 
-## Passo 1 — Estrai il nome della stazione appaltante
+## Obiettivo
 
-Dall'input dell'utente estrai:
-- `ente`: nome completo o parziale della stazione appaltante (OBBLIGATORIO)
-- `anni`: lista di anni da analizzare (default: ultimi 3 anni disponibili)
+Produrre un profilo quantitativo in italiano formale che:
+1. riassuma volume affidamenti per anno;
+2. identifichi i 5 CPV più frequenti;
+3. identifichi i 5 fornitori con maggiore volume aggiudicazioni;
+4. analizzi stagionalità mensile (se disponibile);
+5. segnali eventuali anomalie ricorrenti.
 
-Se `ente` non e' fornito, chiedi all'utente.
+## Regole essenziali
 
-## Passo 2 — Ricerca dataset ANAC per l'ente (OBBLIGATORIO)
+Vedi [../shared/regole-comuni.md](../shared/regole-comuni.md).
 
-```
-anac_search_datasets(query="<ente>", rows=25)
-```
+## Estrazione input
 
-Identifica i dataset che contengono dati di aggiudicazione per l'ente. I dataset ANAC sono tipicamente raggruppati per anno e tipo (CIG smart, OCDS mensile, categorie merceologiche).
+Estrai:
+- `ente`: nome completo o parziale della stazione appaltante, oppure codice fiscale (11 cifre) (OBBLIGATORIO);
+- `date_from` / `date_to`: finestra temporale ISO `YYYY-MM-DD` (default: nessuna — restituisce tutti i record nel snapshot disponibile).
 
-## Passo 3 — Recupera dettagli dataset (OBBLIGATORIO)
+Se `ente` non è fornito, chiedi all'utente. Se l'utente conosce il codice fiscale dell'ente, preferirlo al nome (riduce i falsi positivi).
 
-Per ogni dataset rilevante identificato nel Passo 2:
+## Strategia strumenti
 
-```
-anac_get_dataset(dataset_id="<id>")
-```
+Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
 
-Usa le risorse restituite (URL di download) per costruire il profilo.
+### Sequenza di interrogazione
 
-## Formato output (in italiano)
+1. **Aggregati per anno e CPV** (OBBLIGATORIO):
+   - `anac_sa_history(cf_or_name="<ente>")`
+   - Restituisce `total_awards` (totale aggiudicazioni) e `by_year_cpv` (lista di record con campi `anno`, `cpv`, `cpv_descr`, `n`, `totale_aggiudicato`).
+   - Usa `by_year_cpv` per costruire "Volume affidamenti" (aggregando per `anno`) e "Top CPV" (aggregando per `cpv`).
 
-Inizia sempre con la riga di freschezza:
+2. **Record individuali per fornitori e stagionalità** (OBBLIGATORIO):
+   - `anac_search_awards(query="<ente>", limit=50)`
+   - Restituisce record individuali con campi `aggiudicatario`, `piva_aggiudicatario`, `importo_aggiudicato`, `data_aggiudicazione`, `oggetto`, `cig`.
+   - Usa per costruire "Top fornitori" (raggruppa per `aggiudicatario`) e "Stagionalità" (raggruppa per mese di `data_aggiudicazione`).
 
-```
-Dati letti il YYYY-MM-DD
-```
+### Copertura dati
 
-### ## Volume affidamenti
+Entrambi i tool leggono uno **snapshot mensile** di ANAC (non la storia completa). La copertura temporale è limitata alla finestra dello snapshot — dichiararla nella sezione `## Metodologia`.
 
-Tabella per anno:
+## Formato dell'output
 
-| Anno | N. affidamenti | Importo totale (EUR) | Importo medio (EUR) |
-|------|---------------|----------------------|--------------------|
-
-### ## Top CPV
-
-I 5 codici CPV piu frequenti negli affidamenti dell'ente:
-
-| CPV | Descrizione | N. affidamenti | Importo totale |
-|-----|-------------|---------------|----------------|
-
-### ## Top fornitori
-
-I 5 fornitori con maggiore volume di aggiudicazioni:
-
-| Fornitore | N. aggiudicazioni | Importo totale | CPV prevalente |
-|-----------|-------------------|----------------|----------------|
-
-### ## Stagionalita
-
-Distribuzione mensile degli affidamenti (se disponibile dai dati ANAC).
-Identifica i mesi con picchi di attivita e possibili pattern ricorrenti.
-
-### ## Importo medio per categoria
-
-| Categoria | Importo medio | Range tipico |
-|-----------|---------------|-------------|
-
-### ## Anomalie ricorrenti
-
-Segnala eventuali pattern anomali identificati nei dati:
-- Affidamenti diretti ripetuti allo stesso fornitore
-- Concentrazione elevata su pochi CPV
-- Variazioni anomale di importo anno su anno
-
-### ## Metodologia
-
-L'identificazione della stazione appaltante avviene tramite **corrispondenza per denominazione** sui dataset ANAC. Questo approccio puo generare falsi positivi in presenza di enti con denominazione simile (es. "ASL Roma 1" vs "ASL Roma 1-2"). I risultati si riferiscono esclusivamente agli affidamenti in cui la denominazione dell'ente corrisponde al testo della query.
-
-Specificare il codice fiscale dell'ente (se noto) nella query migliora la precisione.
-
-### ## Audit trail
-
-```
-Query ANAC: "<nome ente>"
-Dataset identificati: <lista ID>
-Anni coperti: <lista>
-Timestamp: YYYY-MM-DDTHH:MM:SSZ
-```
+Segui il formato definito in references/output-format.md.
 
 ## Regole invarianti
 
-- Non inventare fornitori, importi o codici CPV
-- Ogni dato tabellare deve essere derivato dai dataset ANAC restituiti
-- Segnala esplicitamente quando un anno non ha dati disponibili
-- Non esporre i nomi degli strumenti MCP nell'output finale
-- L'output e' sempre in italiano, inclusi i titoli delle sezioni
+- La prima riga dell'output è sempre: `Dati letti il YYYY-MM-DD`
+- Non esporre i nomi degli strumenti MCP nell'output finale.
+- Le sezioni `## Metodologia` e `## Audit trail` sono sempre presenti.

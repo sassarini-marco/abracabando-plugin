@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tinextainnovationhub.com/schemas/eval_dataset/1.0.0",
+  "title": "Industrial Procurement Evaluation Dataset",
+  "description": "Schema for evaluation datasets used in the industrial-procurement-plugin benchmark suite.",
+  "type": "object",
+  "required": ["schema_version", "judge_prompt_version", "cases"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of this schema (e.g. \"1.0.0\")."
+    },
+    "judge_prompt_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identifier of the judge prompt used to score cases (e.g. \"haiku-2025-10-v1\")."
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Ordered list of evaluation cases.",
+      "items": {
+        "$ref": "#/$defs/Case"
+      }
+    }
+  },
+  "$defs": {
+    "GroundTruthRecord": {
+      "type": "object",
+      "required": ["source", "record_id"],
+      "additionalProperties": true,
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Data source identifier (e.g. \"ted\", \"simog\")."
+        },
+        "record_id": {
+          "type": "string",
+          "description": "Unique record identifier within the source (e.g. \"123456-2025\")."
+        },
+        "converted_to_cn": {
+          "type": "boolean",
+          "description": "Whether the PIN was followed by a Contract Notice within the follow-on window (TED 3.1 cases)."
+        },
+        "cn_publication_date": {
+          "type": ["string", "null"],
+          "description": "Publication date of the follow-on Contract Notice, or null if none / unknown."
+        },
+        "status_at_snapshot": {
+          "type": "string",
+          "description": "Status of the record at snapshot time (e.g. \"aperto\")."
+        }
+      }
+    },
+    "Rubrics": {
+      "type": "object",
+      "required": ["D2", "D4"],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "D1": {
+          "type": "string",
+          "description": "Scoring strategy for dimension D1."
+        },
+        "D2": {
+          "const": "deterministic",
+          "description": "Scoring strategy for dimension D2 — must always be \"deterministic\"."
+        },
+        "D3": {
+          "type": "string",
+          "description": "Scoring strategy for dimension D3."
+        },
+        "D4": {
+          "const": "deterministic",
+          "description": "Scoring strategy for dimension D4 — must always be \"deterministic\"."
+        },
+        "D5": {
+          "type": "string",
+          "description": "Scoring strategy for dimension D5."
+        }
+      }
+    },
+    "Case": {
+      "type": "object",
+      "required": [
+        "id",
+        "template",
+        "prompt",
+        "parameters",
+        "snapshot_date",
+        "frozen_date",
+        "ttl_days",
+        "ground_truth_records",
+        "rubrics",
+        "refresh_instructions"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "transformation_score_label": {
+          "type": "string",
+          "enum": ["basso", "medio", "alto"],
+          "description": "Qualitative transformation-to-tender label for template 3.3 cases (never numeric)."
+        },
+        "evidence": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Explicit evidence strings supporting the transformation label (template 3.3)."
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+-[0-9]{3}$",
+          "description": "Unique case identifier in the form \"<template>-<seq>\" (e.g. \"3.1-001\")."
+        },
+        "template": {
+          "type": "string",
+          "enum": ["3.1", "3.2", "3.3"],
+          "description": "Prompt template identifier."
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The prompt text sent to the model under evaluation."
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Template parameter values used to render the prompt.",
+          "additionalProperties": true
+        },
+        "snapshot_date": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO 8601 date of the data snapshot used to construct ground truth (YYYY-MM-DD)."
+        },
+        "frozen_date": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO 8601 date on which the case was frozen / last validated (YYYY-MM-DD)."
+        },
+        "ttl_days": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 180,
+          "description": "Number of days the case remains valid before a refresh is required."
+        },
+        "ground_truth_records": {
+          "type": "array",
+          "minItems": 0,
+          "description": "Expected records that a correct answer must reference. Empty array is valid when no live records are available for the current snapshot (D2 is then vacuously 1.0).",
+          "items": {
+            "$ref": "#/$defs/GroundTruthRecord"
+          }
+        },
+        "rubrics": {
+          "$ref": "#/$defs/Rubrics",
+          "description": "Per-dimension scoring strategies for this case."
+        },
+        "refresh_instructions": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable instructions for refreshing this case when the TTL expires."
+        }
+      }
+    }
+  }
+}

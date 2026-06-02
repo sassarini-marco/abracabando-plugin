@@ -1,128 +1,98 @@
 ---
 name: reconciliation-pnrr
-description: Riconcilia i dati PNRR tra OpenPNRR, OpenCoesione e ANAC per uno o piu CUP. Invocato con `/reconciliation-pnrr`. Identifica divergenze di importo, stato e pubblicazione TED.
+description: Riconcilia i dati PNRR tra OpenPNRR, OpenCoesione e ANAC per uno o più CUP. Usa questa skill quando l'utente chiede di verificare allineamento tra fonti PNRR, identificare divergenze di importo, stato e pubblicazione TED, e ottenere un report con flag di anomalia.
+argument-hint: "<CUP> [misura_pnrr]"
+disable-model-invocation: true
 allowed-tools:
-  - mcp__industrial-mcp-free__openpnrr_list
-  - mcp__industrial-mcp-free__openpnrr_get
-  - mcp__industrial-mcp-free__opencoesione_describe_dataset
-  - mcp__industrial-mcp-free__opencoesione_download_parquet
-  - mcp__industrial-mcp-free__opencoesione_list_datasets
-  - mcp__industrial-mcp-free__anac_search_datasets
-  - mcp__industrial-mcp-free__anac_pnrr_datasets
   - mcp__industrial-mcp-pro__openpnrr_list
   - mcp__industrial-mcp-pro__openpnrr_get
-  - mcp__industrial-mcp-pro__opencoesione_describe_dataset
-  - mcp__industrial-mcp-pro__opencoesione_download_parquet
-  - mcp__industrial-mcp-pro__opencoesione_list_datasets
-  - mcp__industrial-mcp-pro__anac_search_datasets
+  - mcp__industrial-mcp-pro__opencoesione_project_by_cup
+  - mcp__industrial-mcp-pro__opencoesione_search_projects
+  - mcp__industrial-mcp-pro__anac_search_awards
   - mcp__industrial-mcp-pro__anac_pnrr_datasets
+  - mcp__industrial-mcp-pro__ted_search
+  - mcp__industrial-mcp-free__openpnrr_list
+  - mcp__industrial-mcp-free__openpnrr_get
+  - mcp__industrial-mcp-free__opencoesione_project_by_cup
+  - mcp__industrial-mcp-free__opencoesione_search_projects
+  - mcp__industrial-mcp-free__anac_search_awards
+  - mcp__industrial-mcp-free__anac_pnrr_datasets
+  - mcp__industrial-mcp-free__ted_search
 ---
 
-# /reconciliation-pnrr — Protocollo di esecuzione
+# Reconciliation PNRR
 
-Sei un assistente specializzato nell'analisi della spesa pubblica italiana.
-Segui questo protocollo in ordine. Non saltare passi. Non inventare dati.
+Usa questa skill solo per richieste su:
+- riconciliazione dati PNRR tra fonti (OpenPNRR, OpenCoesione, ANAC);
+- verifica allineamento importi, stati, pubblicazione TED;
+- identificazione divergenze e anomalie per CUP specifici.
+
+## Obiettivo
+
+Produrre un report di riconciliazione in italiano formale che:
+1. confronti dati da OpenPNRR, OpenCoesione e ANAC per uno o più CUP;
+2. identifichi divergenze di importo, stato e pubblicazione TED;
+3. assegni flag di anomalia standardizzati;
+4. fornisca spiegazione dettagliata per ogni flag rilevato.
+
+## Regole essenziali
+
+Vedi [../shared/regole-comuni.md](../shared/regole-comuni.md).
 
 ## Marcatori di flag
 
-Usa esattamente questi identificatori nel testo (sono anchor stabili per manutenzione futura):
+Usa **esattamente** questi identificatori (maiuscolo, underscore — anchor stabili):
 
 - `CUP_ORFANO`: CUP presente in OpenPNRR ma assente in OpenCoesione o ANAC
 - `IMPORTO_SOPRA_FINANZIATO`: importo ANAC/contrattuale superiore al finanziamento OpenCoesione
 - `STATO_DIVERGENTE`: stato progetto diverso tra OpenPNRR e OpenCoesione (es. "completato" vs "in corso")
-- `MANCATA_PUBBLICAZIONE_TED`: contratto sopra soglia UE senza corrispondente avviso TED
+- `MANCATA_PUBBLICAZIONE_TED`: contratto sopra soglia UE senza corrispondente avviso TED (verifica euristica)
 
-## Passo 1 — Estrai identificatori
+Per il formato delle spiegazioni, consulta references/flag-explanations.md.
 
-Dall'input dell'utente estrai:
-- `cups`: lista di CUP da riconciliare (OBBLIGATORIO — almeno uno)
-- `misura_pnrr`: codice misura PNRR (es. "M1C1-1.1") oppure `null`
+## Estrazione input
 
-Se nessun CUP e' fornito, chiedi all'utente.
+Estrai:
+- `cups`: lista di CUP da riconciliare (OBBLIGATORIO — almeno uno);
+- `misura_pnrr`: codice misura PNRR (es. "M1C1-1.1") oppure `null`.
 
-## Passo 2 — OpenPNRR (OBBLIGATORIO)
+Se nessun CUP è fornito, chiedi all'utente.
 
-Per ogni CUP o per la misura PNRR:
+## Strategia strumenti
 
-```
-openpnrr_list(endpoint="misure")
-```
+Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
 
-oppure, per un progetto specifico:
+### Sequenza di interrogazione
 
-```
-openpnrr_get(endpoint="progetti", id="<cup>")
-```
+1. **OpenPNRR** (OBBLIGATORIO):
+   - Per un CUP specifico: `openpnrr_get(endpoint="progetti", id="<cup>")`
+   - Per una misura PNRR: `openpnrr_list(endpoint="misure")`
+   - Ricava: stato progetto, titolo, ente beneficiario.
 
-## Passo 3 — OpenCoesione (OBBLIGATORIO)
+2. **OpenCoesione** (OBBLIGATORIO):
+   - Primary: `opencoesione_project_by_cup(cup="<cup>")`
+   - Restituisce: `totale_finanziato`, `totale_impegnato`, `totale_pagato`, `stato_procedurale`, `stato_finanziario`.
+   - Fallback se il CUP non è trovato: `opencoesione_search_projects(cup="<cup>")`.
+   - Confronta importi e stato con OpenPNRR.
 
-Identifica il dataset del ciclo 2021-2027:
+3. **ANAC CIG-level** (OBBLIGATORIO):
+   - `anac_pnrr_datasets()` per individuare i dataset PNRR disponibili.
+   - `anac_search_awards(query="<ente beneficiario>")` per trovare i contratti CIG correlati al CUP.
+   - Ricava: importo aggiudicato, aggiudicatario, data aggiudicazione.
 
-```
-opencoesione_describe_dataset(dataset_id="progetti_esteso_2021-2027")
-```
+4. **TED** (CONDIZIONALE — solo se `importo_aggiudicato` ANAC ≥ soglia UE):
+   - Soglie UE: servizi/forniture ≥ EUR 140 000; lavori ≥ EUR 5 538 000.
+   - `ted_search(query='buyer-name="<ente beneficiario>" AND place-of-performance=ITA', scope="ALL", limit=10)`
+   - Se nessun avviso TED trovato → flag `MANCATA_PUBBLICAZIONE_TED`.
+   - **Nota**: la verifica è **euristica** (buyer-name + soglia importo). TED non contiene CIG o CUP — non è possibile una corrispondenza esatta per identificatore nazionale.
 
-Ottieni l'URL Parquet:
+## Formato dell'output
 
-```
-opencoesione_download_parquet(dataset_id="progetti_esteso_2021-2027")
-```
-
-Usa l'URL per indicare all'utente dove scaricare i dati bulk se necessario.
-Confronta gli importi e lo stato del progetto con i dati OpenPNRR.
-
-## Passo 4 — ANAC CIG-level (OBBLIGATORIO)
-
-```
-anac_pnrr_datasets()
-anac_search_datasets(query="pnrr <cup_o_ente>", rows=10)
-```
-
-## Formato output (in italiano)
-
-Inizia sempre con la riga di freschezza:
-
-```
-Dati letti il YYYY-MM-DD
-```
-
-### ## Tabella di allineamento
-
-| CUP | Stato OpenPNRR | Importo OpenCoesione | Importo ANAC | Flag |
-|-----|----------------|---------------------|--------------|------|
-
-Compila una riga per ogni CUP analizzato. Nella colonna Flag usa i marcatori definiti sopra (separati da virgola se multipli). Se nessun flag, scrivi "-".
-
-### ## Flag rilevati
-
-Per ogni flag identificato, fornisci una spiegazione dettagliata:
-
-**CUP_ORFANO**: il CUP `<X>` e' presente in OpenPNRR ma non trovato in OpenCoesione o ANAC. Possibili cause: progetto non ancora inserito nel sistema di monitoraggio, errore di codifica CUP, progetto annullato.
-
-**IMPORTO_SOPRA_FINANZIATO**: l'importo contrattuale ANAC (`<X>` EUR) supera il finanziamento OpenCoesione (`<Y>` EUR) per il CUP `<Z>`. Differenza: `<delta>` EUR. Verificare se il finanziamento e' stato aggiornato o se vi sono co-finanziamenti non registrati.
-
-**STATO_DIVERGENTE**: OpenPNRR riporta stato `<A>` mentre OpenCoesione riporta `<B>` per il CUP `<Z>`. Le fonti non sono sincronizzate — la data dell'ultimo aggiornamento e' da verificare.
-
-**MANCATA_PUBBLICAZIONE_TED**: contratto con importo `<X>` EUR (sopra soglia UE) senza corrispondente avviso TED trovato. Obbligatoria pubblicazione ai sensi del D.Lgs. 36/2023. Verificare numero di pubblicazione TED o segnalare all'ente.
-
-### ## Dati non disponibili
-
-Elenca ogni fonte con zero risultati e motivazione.
-
-### ## Audit trail
-
-```
-CUP analizzati: <lista>
-Fonti interrogate: OpenPNRR, OpenCoesione, ANAC
-Flag rilevati: <lista marcatori>
-Dataset OpenCoesione usato: <id>
-Timestamp: YYYY-MM-DDTHH:MM:SSZ
-```
+Segui il formato definito in references/output-format.md.
 
 ## Regole invarianti
 
-- Non inventare importi, stati o flag — ogni flag deve avere evidenza dalla fonte
-- Usa i marcatori flag esattamente come definiti (maiuscolo, underscore)
-- Ogni voce nella tabella deve avere fonte identificabile con URL `(fonte: [nome](URL))`
-- Non esporre i nomi degli strumenti MCP nell'output finale
-- L'output e' sempre in italiano, inclusi i titoli delle sezioni
+- La prima riga dell'output è sempre: `Dati letti il YYYY-MM-DD`
+- Non esporre i nomi degli strumenti MCP nell'output finale.
+- Le sezioni `## Dati non disponibili` e `## Audit trail` sono sempre presenti.
+- Ogni voce nella tabella di allineamento deve avere fonte identificabile con URL.

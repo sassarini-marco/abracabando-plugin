@@ -1,145 +1,98 @@
 ---
 name: scheda-opportunita
-description: Produce una scheda dettagliata su una specifica opportunita di gara, incrociando ANAC, OpenPNRR, OpenCoesione e TED. Invocata con `/scheda-opportunita`. Richiede un CIG, CUP o nome dell'ente come input.
+description: Produce una scheda dettagliata su una specifica opportunità di gara, incrociando ANAC, OpenPNRR, OpenCoesione e TED. Usa questa skill quando l'utente chiede di analizzare un'opportunità identificata da CIG, CUP o nome dell'ente, e vuole una nota decisionale go/no-go con storico acquisti, intelligence competitiva, timeline attesa e raccomandazioni operative.
+argument-hint: "<CIG|CUP|ente> [CPV]"
+disable-model-invocation: true
 allowed-tools:
-  - mcp__industrial-mcp-free__anac_search_datasets
-  - mcp__industrial-mcp-free__anac_get_dataset
-  - mcp__industrial-mcp-free__openpnrr_list
-  - mcp__industrial-mcp-free__openpnrr_get
-  - mcp__industrial-mcp-free__opencoesione_describe_dataset
-  - mcp__industrial-mcp-free__opencoesione_list_datasets
-  - mcp__industrial-mcp-free__ted_search
-  - mcp__industrial-mcp-pro__anac_search_datasets
-  - mcp__industrial-mcp-pro__anac_get_dataset
+  - mcp__industrial-mcp-pro__anac_search_awards
+  - mcp__industrial-mcp-pro__ted_search
   - mcp__industrial-mcp-pro__openpnrr_list
   - mcp__industrial-mcp-pro__openpnrr_get
   - mcp__industrial-mcp-pro__opencoesione_describe_dataset
   - mcp__industrial-mcp-pro__opencoesione_list_datasets
-  - mcp__industrial-mcp-pro__ted_search
+  - mcp__industrial-mcp-free__anac_search_awards
+  - mcp__industrial-mcp-free__anac_search_datasets
+  - mcp__industrial-mcp-free__anac_get_dataset
+  - mcp__industrial-mcp-free__ted_search
+  - mcp__industrial-mcp-free__openpnrr_list
+  - mcp__industrial-mcp-free__openpnrr_get
+  - mcp__industrial-mcp-free__opencoesione_describe_dataset
+  - mcp__industrial-mcp-free__opencoesione_list_datasets
 ---
 
-# /scheda-opportunita — Protocollo di esecuzione
+# Scheda Opportunità
 
-Sei un assistente specializzato nell'analisi della spesa pubblica italiana.
-Segui questo protocollo in ordine. Non saltare passi. Non inventare dati.
+Usa questa skill solo per richieste su:
+- analisi di un'opportunità specifica identificata da CIG, CUP o nome ente;
+- incrocio TED-ANAC-PNRR-Coesione;
+- schede di intelligence commerciale go/no-go.
 
-## Passo 1 — Estrai identificatori dalla richiesta
+## Obiettivo
 
-Dall'input dell'utente estrai:
-- `cig`: Codice Identificativo Gara oppure `null`
-- `cup`: Codice Unico di Progetto oppure `null`
-- `ente`: nome della stazione appaltante oppure `null`
-- `cpv`: codice CPV oppure `null`
+Produrre una scheda di intelligence commerciale in italiano formale che:
+1. incroci dati da TED, ANAC, OpenPNRR e OpenCoesione;
+2. classifichi Coerenza CPV e Valutazione trasformazione (Alta/Media/Bassa);
+3. fornisca storico aggiudicazioni ANAC e intelligence competitiva;
+4. indichi timeline attesa e prossimi passi consigliati;
+5. includa sempre sezioni Fonti, Dati non disponibili e Audit trail.
 
-Almeno uno tra `cig`, `cup` o `ente` deve essere presente. Se nessuno e' fornito, chiedi all'utente.
+## Regole essenziali
 
-## Passo 2 — Ricerca ANAC (OBBLIGATORIO)
+Vedi [../shared/regole-comuni.md](../shared/regole-comuni.md).
 
-```
-anac_search_datasets(query="<cig OR cup OR ente>", rows=10)
-```
+## Estrazione input
 
-Se il risultato contiene dataset rilevanti, chiama:
-```
-anac_get_dataset(dataset_id="<id-dataset>")
-```
+Estrai:
+- `cig`: Codice Identificativo Gara oppure `null`;
+- `cup`: Codice Unico di Progetto oppure `null`;
+- `ente`: nome della stazione appaltante oppure `null`;
+- `cpv`: codice CPV oppure `null`.
 
-## Passo 3 — Ricerca OpenPNRR (CONDIZIONALE)
+Almeno uno tra `cig`, `cup` o `ente` deve essere presente. Se nessuno è fornito, chiedi all'utente.
 
-Esegui se `cup` e' disponibile o se il CPV/settore e' tipicamente PNRR.
+## Strategia strumenti
 
-```
-openpnrr_list(endpoint="progetti")
-```
+Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
 
-oppure, se il CUP e' noto:
-```
-openpnrr_get(endpoint="progetti", id="<cup>")
-```
+### Sequenza di interrogazione
 
-Se zero risultati, registra in `## Dati non disponibili` e continua.
+1. **ANAC** (OBBLIGATORIO):
+   - `anac_search_awards(query="<ente OR oggetto>", cpv_prefix="<cpv_prefix>")`
+   - Se zero risultati, fallback: `anac_search_datasets(query="<cig OR cup OR ente>", rows=10)` (ATTENZIONE: restituisce ZIP da 100 MB — usare solo come ultima risorsa)
 
-## Passo 4 — OpenCoesione (CONDIZIONALE)
+2. **TED** (CONDIZIONALE — esegui se importo stimato > soglia UE o se `ente` è noto):
+   - `ted_search(query="buyer-name=\"<ente>\" AND place-of-performance=ITA", limit=10)`
+   - Se errore (400, 500, timeout): documenta in `## Dati non disponibili` ed emetti scheda con dati disponibili.
 
-Esegui se il progetto ha un CUP o e' nel ciclo 2021-2027.
+3. **OpenPNRR** (CONDIZIONALE — esegui se `cup` disponibile o se CPV/settore tipicamente PNRR):
+   - `openpnrr_list(endpoint="progetti")` oppure `openpnrr_get(endpoint="progetti", id="<cup>")`
+   - Se zero risultati: documenta in `## Dati non disponibili`.
 
-```
-opencoesione_list_datasets()
-opencoesione_describe_dataset(dataset_id="progetti_esteso_2021-2027")
-```
+4. **OpenCoesione** (CONDIZIONALE — esegui se CUP disponibile o se ciclo 2021-2027):
+   - `opencoesione_list_datasets()`, `opencoesione_describe_dataset(dataset_id="progetti_esteso_2021-2027")`
+   - Se zero risultati: documenta in `## Dati non disponibili`.
 
-Usa il risultato per identificare il dataset di ciclo appropriato.
-Se zero risultati, registra in `## Dati non disponibili` e continua.
+### Gestione date implausibili
 
-## Passo 5 — Ricerca TED (CONDIZIONALE)
+Se un campo `data_aggiudicazione` ANAC ha anno < 2000 o > 2030, **non riportarlo** nella scheda; segnalalo in `## Dati non disponibili` con la nota:  
+`"data_aggiudicazione ANAC implausibile (valore grezzo: [valore]) — qualità del dato ANAC non sufficiente per la pubblicazione"`
 
-Esegui se l'importo stimato supera la soglia UE o se `ente` e' noto.
+## Formato dell'output
 
-```
-ted_search(query="buyer-name=\"<ente>\" AND place-of-performance=ITA", limit=10)
-```
+Segui il formato definito in references/output-format.md.
 
-Se zero risultati, registra in `## Dati non disponibili` e continua.
+Per le regole di classificazione Coerenza CPV e Valutazione trasformazione, consulta references/classification-rules.md.
 
-## Formato output (in italiano)
-
-Inizia sempre con la riga di freschezza:
-
-```
-Dati letti il YYYY-MM-DD
-```
-
-### ## Descrizione
-
-Paragrafo sintetico sull'opportunita: oggetto, ente, importo stimato, stato attuale.
-
-### ## Fonti incrociate
-
-Tabella di confronto tra le fonti interrogate:
-
-| Fonte | Campo | Valore | Confidenza |
-|-------|-------|--------|------------|
-
-Includi una riga per ogni campo chiave (importo, stato, CUP, CIG, data pubblicazione) per ogni fonte che ha restituito dati.
-
-### ## Storico ente
-
-Se ANAC ha restituito dataset storici per l'ente, riassumi:
-- Numero totale di affidamenti negli ultimi 3 anni disponibili
-- CPV prevalenti
-- Importo medio per categoria
-
-### ## Concorrenti probabili
-
-Elenca fino a 5 fornitori storici con maggiore probabilita di partecipazione, basandosi su:
-- Aggiudicatari precedenti dell'ente per CPV simili (da ANAC)
-- Nota: questa lista si basa su dati storici pubblici, non su informazioni riservate
-
-### ## Timeline attesa
-
-Stima basata su:
-- Lead time tipico per CPV e importo
-- Date di programmazione da Passo 1 (se disponibili)
-- Pattern storici dell'ente
-
-### ## Dati non disponibili
-
-Elenca ogni fonte non consultata o con zero risultati, con motivazione.
-
-### ## Audit trail
-
-```
-Identificatori input: CIG=<X>, CUP=<Y>, Ente=<Z>
-Fonti interrogate: ANAC, OpenPNRR, OpenCoesione, TED
-Fonti con risultati: <lista>
-Fonti senza risultati: <lista con motivazione>
-Timestamp: YYYY-MM-DDTHH:MM:SSZ
-```
+Se serve un esempio completo, consulta examples/example-output.md.
 
 ## Regole invarianti
 
-- Non inventare CIG, CUP, importi o partecipanti
-- Ogni dato nella sezione "Fonti incrociate" deve avere la fonte identificata con URL `(fonte: [nome](URL))`
-- Usa "Concorrenti probabili" con cautela: sono stime basate su dati storici, non certezze
-- Non esporre i nomi degli strumenti MCP nell'output finale
-- L'output e' sempre in italiano, inclusi i titoli delle sezioni
+- La prima riga dell'output è sempre: `Dati letti il YYYY-MM-DD`
+- La sezione `## Sintesi incrociata TED-ANAC` deve apparire con **ESATTAMENTE** questo titolo (mai numerata, mai rinominata).
+- Per le regole di classificazione (Coerenza CPV, Valutazione trasformazione), vedi `references/classification-rules.md`.
+- La sezione `## Fonti` deve elencare ogni fonte consultata con: identificatore grezzo (CIG, CUP, numero TED `NNNNNN-YYYY`), URL istituzionale restituito dallo strumento, data di lettura `YYYY-MM-DD`.
+- Per ANAC senza URL specifico, usa `https://dati.anticorruzione.it/opendata`.
+- Non costruire URL dalla memoria — usa **solo** quelli restituiti dagli strumenti.
+- Non esporre i nomi degli strumenti MCP nell'output finale.
+- Le sezioni `## Dati non disponibili` e `## Audit trail` sono sempre presenti.
+- La sezione `## Intelligence competitiva` deve includere il disclaimer: "dati storici pubblici ANAC, non informazioni riservate".
