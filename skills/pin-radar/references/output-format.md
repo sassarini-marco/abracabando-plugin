@@ -113,6 +113,7 @@ Blocco di codice fenced con:
 - Query esatta inviata a TED (parametri CPV, NUTS, finestra temporale, limit, page);
 - Numero di pagine interrogate;
 - Numero totale di PIN raccolti;
+- `tool_preferito` (`pro` | `free`) e `fallback_attivato` (`si` | `no`) — vedi `../shared/strategia-strumenti.md`;
 - Data di lettura (YYYY-MM-DD);
 - Timestamp ISO 8601.
 
@@ -126,6 +127,8 @@ Query TED PIN Italia:
   
 Pagine interrogate: 2 (page=1, page=2)
 PIN raccolti: 18 (10 da page1 + 8 da page2)
+tool_preferito: "free"
+fallback_attivato: "si"
 Data lettura: 2026-06-02
 Timestamp: 2026-06-02T14:30:00Z
 ```

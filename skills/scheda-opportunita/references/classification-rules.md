@@ -5,7 +5,7 @@ Usa **solo** le etichette:
 - Media
 - Bassa
 
-**VIETATO** usare:
+Non usare altre forme di valutazione: una scala qualitativa a tre livelli mantiene le schede confrontabili tra loro ed evita di suggerire una precisione (numerica o percentuale) che i dati disponibili non giustificano. In particolare evita:
 - punteggi numerici (es. "9/10", "Score 95/100")
 - percentuali (es. "82%")
 - stelle

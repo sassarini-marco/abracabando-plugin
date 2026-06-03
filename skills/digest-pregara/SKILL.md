@@ -1,6 +1,6 @@
 ---
 name: digest-pregara
-description: Analizza il mercato di pre-gara per un settore CPV o una regione. Usa questa skill quando l'utente chiede di monitorare opportunità rilevate da programmazione regionale, TED PIN e PNRR, e vuole un digest in italiano con piena provenienza e livelli di confidenza.
+description: Analizza il mercato di pre-gara per un settore CPV o una regione, incrociando programmazione regionale biennale, TED PIN e PNRR, e produce un digest in italiano con piena provenienza e livelli di confidenza. Usa questa skill ogni volta che l'utente vuole una panoramica delle opportunità in arrivo in un settore o regione, chiede "cosa bolle in pentola" o "cosa sta per uscire", vuole un quadro di pre-gara con lead time e confidenza incrociando programmazione, avvisi TED e fondi PNRR — anche se nomina una sola di queste fonti.
 argument-hint: "[CPV] [regione] [anno]"
 disable-model-invocation: true
 allowed-tools:
@@ -54,10 +54,13 @@ Se regione è `null` o non specificata, usa il titolo con `· Italia` e ometti i
 
 ### Derivazione `sopra_soglia`
 
-Determina se la query TED PIN va eseguita:
-- Se `importo` dalle voci di programmazione ≥ EUR 140 000 (servizi/forniture) o ≥ EUR 5 538 000 (lavori) → `sopra_soglia = true`.
-- Se importo non disponibile: `sopra_soglia = true` per CPV 72xxxx (IT services), 71xxxx (ingegneria), 45xxxx (lavori); per tutti gli altri usa `false` come default conservativo.
-- Documenta il ragionamento in `## Dati non disponibili`.
+Determina se la query TED PIN va eseguita (soglie vigenti in [../shared/soglie-ue.md](../shared/soglie-ue.md)). Applica la prima regola che corrisponde, senza esitare sui casi limite — l'importante è dichiarare poi l'assunzione:
+1. `importo` ≥ EUR 140 000 (servizi/forniture) o ≥ EUR 5 404 000 (lavori) → `sopra_soglia = true`.
+2. `importo` presente ma sotto soglia → `sopra_soglia = false`.
+3. `importo` non disponibile e CPV nelle famiglie 72xxxx (IT), 71xxxx (ingegneria) o 45xxxx (lavori) → `sopra_soglia = true`.
+4. `importo` non disponibile e CPV in qualsiasi altra famiglia → `sopra_soglia = false` (default conservativo: per queste famiglie le opportunità sopra-soglia su TED sono rare e una query a vuoto aggiunge solo rumore).
+
+Documenta sempre quale regola hai applicato e l'eventuale assunzione in `## Dati non disponibili`.
 
 ## Strategia strumenti
 
@@ -96,7 +99,7 @@ Se nessuna data è disponibile, indica `"n.d."` nella colonna Lead time e usa **
 
 Segui il formato definito in references/output-format.md.
 
-Per la mappatura NUTS, consulta references/nuts-mapping.md.
+Per la mappatura NUTS, consulta references/nuts-mapping.md (è un collegamento simbolico alla tabella condivisa in `../pin-radar/references/nuts-mapping.md`: modifica quel file per aggiornare entrambe le skill).
 
 ## Regole invarianti
 

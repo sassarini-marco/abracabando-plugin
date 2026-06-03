@@ -86,6 +86,9 @@ Blocco di codice fenced:
 Query programmazione: cpv=<X>, regione=<Y>, anno=<Z>
 Query TED PIN: <query string completa oppure "non eseguita">
 Misure PNRR confrontate: <lista ID misure>
+tool_preferito: "pro" | "free"
+fallback_attivato: "si" | "no"
+data_lettura: YYYY-MM-DD
 Timestamp: YYYY-MM-DDTHH:MM:SSZ
 ```
 
@@ -95,5 +98,8 @@ Esempio:
 Query programmazione: cpv=71000000, regione=Puglia, anno=2025
 Query TED PIN: cpv_codes=["71000000"], nuts_region="ITF4", limit=25
 Misure PNRR confrontate: M1C1, M1C2, M2C3
+tool_preferito: "free"
+fallback_attivato: "no"
+data_lettura: 2026-06-02
 Timestamp: 2026-06-02T17:12:45+02:00
 ```

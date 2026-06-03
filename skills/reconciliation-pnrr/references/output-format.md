@@ -54,5 +54,8 @@ CUP analizzati: <lista>
 Fonti interrogate: OpenPNRR, OpenCoesione, ANAC
 Flag rilevati: <lista marcatori>
 Dataset OpenCoesione usato: <id>
+tool_preferito: "pro" | "free"
+fallback_attivato: "si" | "no"
+data_lettura: YYYY-MM-DD
 Timestamp: YYYY-MM-DDTHH:MM:SSZ
 ```

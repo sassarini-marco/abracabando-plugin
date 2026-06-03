@@ -1,6 +1,6 @@
 ---
 name: scheda-opportunita
-description: Produce una scheda dettagliata su una specifica opportunità di gara, incrociando ANAC, OpenPNRR, OpenCoesione e TED. Usa questa skill quando l'utente chiede di analizzare un'opportunità identificata da CIG, CUP o nome dell'ente, e vuole una nota decisionale go/no-go con storico acquisti, intelligence competitiva, timeline attesa e raccomandazioni operative.
+description: Produce una scheda dettagliata su una specifica opportunità di gara, incrociando ANAC, OpenPNRR, OpenCoesione e TED, con storico acquisti, intelligence competitiva, timeline attesa e raccomandazioni operative. Usa questa skill ogni volta che l'utente deve decidere go/no-go su una singola opportunità identificata da CIG, CUP o nome ente: vuole sapere se conviene partecipare, chi è l'incumbent o i concorrenti probabili, quando uscirà il bando, qual è lo storico dell'ente — anche se chiede semplicemente "mi conviene questa gara?" o "chi devo battere su questo CIG?".
 argument-hint: "<CIG|CUP|ente> [CPV]"
 disable-model-invocation: true
 allowed-tools:
@@ -61,6 +61,7 @@ Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
    - Se zero risultati, fallback: `anac_search_datasets(query="<cig OR cup OR ente>", rows=10)` (ATTENZIONE: restituisce ZIP da 100 MB — usare solo come ultima risorsa)
 
 2. **TED** (CONDIZIONALE — esegui se importo stimato > soglia UE o se `ente` è noto):
+   - Soglia UE di riferimento: EUR 140 000 per servizi/forniture, EUR 5 404 000 per lavori (fonte unica e valori vigenti in [../shared/soglie-ue.md](../shared/soglie-ue.md)). Se l'importo non è stimabile ma `ente` è noto, esegui comunque la query.
    - `ted_search(query="buyer-name=\"<ente>\" AND place-of-performance=ITA", limit=10)`
    - Se errore (400, 500, timeout): documenta in `## Dati non disponibili` ed emetti scheda con dati disponibili.
 
@@ -74,7 +75,7 @@ Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
 
 ### Gestione date implausibili
 
-Se un campo `data_aggiudicazione` ANAC ha anno < 2000 o > 2030, **non riportarlo** nella scheda; segnalalo in `## Dati non disponibili` con la nota:  
+Se un campo `data_aggiudicazione` ANAC ha anno < 2000 o > 2030, ometti quella data dalla tabella dello storico aggiudicazioni (lascia la riga del contratto, ma con data vuota o `n.d.`) e non usarla in nessun calcolo di timeline o stagionalità. Segnala il valore grezzo in `## Dati non disponibili` con la nota:  
 `"data_aggiudicazione ANAC implausibile (valore grezzo: [valore]) — qualità del dato ANAC non sufficiente per la pubblicazione"`
 
 ## Formato dell'output

@@ -35,7 +35,7 @@ Dati letti il 2025-01-15
 ## Dati non disponibili
 
 - PNRR misura M2C3-2.1: scadenza milestone non disponibile in OpenPNRR `endpoint="scadenze"`, fallback a `endpoint="misure"` ha restituito solo titolo generico senza data. Lead time: n.d., confidenza Bassa.
-- TED PIN: la query è stata eseguita perché CPV 71000000 (servizi di ingegneria) rientra tipicamente sopra soglia UE (≥ EUR 5 538 000 per lavori, ≥ EUR 140 000 per servizi). Non è stato possibile derivare importi esatti da tutte le voci di programmazione regionale; dove assente, confidenza ridotta a Media.
+- TED PIN: la query è stata eseguita perché CPV 71000000 (servizi di ingegneria) rientra tipicamente sopra soglia UE (≥ EUR 5 404 000 per lavori, ≥ EUR 140 000 per servizi). Non è stato possibile derivare importi esatti da tutte le voci di programmazione regionale; dove assente, confidenza ridotta a Media.
 
 ## Audit trail
 

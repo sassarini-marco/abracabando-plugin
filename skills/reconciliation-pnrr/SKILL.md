@@ -1,6 +1,6 @@
 ---
 name: reconciliation-pnrr
-description: Riconcilia i dati PNRR tra OpenPNRR, OpenCoesione e ANAC per uno o più CUP. Usa questa skill quando l'utente chiede di verificare allineamento tra fonti PNRR, identificare divergenze di importo, stato e pubblicazione TED, e ottenere un report con flag di anomalia.
+description: Riconcilia i dati PNRR tra OpenPNRR, OpenCoesione e ANAC per uno o più CUP e produce un report con flag di anomalia standardizzati. Usa questa skill ogni volta che l'utente vuole verificare se le fonti PNRR sono allineate su un CUP o una misura: divergenze di importo tra OpenPNRR e OpenCoesione, stati di avanzamento incoerenti, importi contrattuali sopra il finanziato, contratti sopra-soglia senza avviso TED, CUP orfani — anche se chiede solo "i dati di questo CUP tornano?" o "perché gli importi non coincidono?".
 argument-hint: "<CUP> [misura_pnrr]"
 disable-model-invocation: true
 allowed-tools:
@@ -81,10 +81,14 @@ Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
    - Ricava: importo aggiudicato, aggiudicatario, data aggiudicazione.
 
 4. **TED** (CONDIZIONALE — solo se `importo_aggiudicato` ANAC ≥ soglia UE):
-   - Soglie UE: servizi/forniture ≥ EUR 140 000; lavori ≥ EUR 5 538 000.
+   - Soglie UE: servizi/forniture ≥ EUR 140 000; lavori ≥ EUR 5 404 000 (fonte unica e valori vigenti in [../shared/soglie-ue.md](../shared/soglie-ue.md)).
    - `ted_search(query='buyer-name="<ente beneficiario>" AND place-of-performance=ITA', scope="ALL", limit=10)`
    - Se nessun avviso TED trovato → flag `MANCATA_PUBBLICAZIONE_TED`.
    - **Nota**: la verifica è **euristica** (buyer-name + soglia importo). TED non contiene CIG o CUP — non è possibile una corrispondenza esatta per identificatore nazionale.
+
+### Gestione date e importi implausibili
+
+Se una data restituita da OpenPNRR, OpenCoesione o ANAC ha anno < 2000 o > 2035, oppure se un importo è negativo o palesemente fuori scala, non usarla per derivare flag o divergenze: trattala come dato mancante e annota il valore grezzo in `## Dati non disponibili`. Un flag (es. `STATO_DIVERGENTE` o `IMPORTO_SOPRA_FINANZIATO`) non deve mai poggiare su un valore implausibile, altrimenti segnalerebbe un'anomalia inesistente.
 
 ## Formato dell'output
 

@@ -186,6 +186,7 @@ Sezione sempre presente.
 Blocco di codice fenced con:
 - Identificatori di input (CIG, CUP, ente, CPV);
 - Numero totale di record trovati nelle fonti;
+- `tool_preferito` (`pro` | `free`) e `fallback_attivato` (`si` | `no`) — vedi `../shared/strategia-strumenti.md`;
 - Data di lettura (YYYY-MM-DD);
 - Timestamp ISO 8601.
 
@@ -203,6 +204,8 @@ Risultati:
   OpenPNRR: 0 progetti trovati
   OpenCoesione: non interrogato (nessun CUP disponibile)
 
+tool_preferito: "free"
+fallback_attivato: "si"
 Data lettura: 2026-06-02
 Timestamp: 2026-06-02T16:23:45+02:00
 ```

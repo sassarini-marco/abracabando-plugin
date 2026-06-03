@@ -1,6 +1,6 @@
 ---
 name: pin-radar
-description: Monitora i Prior Information Notice (PIN) pubblicati su TED per l'Italia, filtrabili per CPV e macro-regione NUTS. Usa questa skill quando l'utente chiede di monitorare avvisi preliminari europei, segnali pre-gara TED o opportunità pubbliche sopra-soglia EU, e vuole una nota decisionale con priorità operative, risultati analizzati in esteso, audit trail e mappatura NUTS.
+description: Monitora i Prior Information Notice (PIN) pubblicati su TED per l'Italia, filtrabili per CPV e macro-regione NUTS, e produce una nota decisionale con priorità operative, risultati analizzati in esteso, audit trail e mappatura NUTS. Usa questa skill ogni volta che l'utente parla di avvisi preliminari o di preinformazione europei, segnali o scouting pre-gara su TED, indagini di mercato sopra-soglia UE, "pre-gare europee", o vuole capire quali gare sopra-soglia stanno per uscire in Italia in un certo settore o regione — anche se non nomina esplicitamente "PIN" o "TED".
 argument-hint: "[CPV] [regione/NUTS]"
 disable-model-invocation: true
 allowed-tools:

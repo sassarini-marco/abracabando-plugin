@@ -1,6 +1,6 @@
 ---
 name: consultazioni-radar
-description: Monitora consultazioni di mercato, avvisi esplorativi e bandi Consip rilevanti per un settore o una tecnologia. Usa questa skill quando l'utente chiede di monitorare opportunità Consip, consultazioni esplorative o bandi aperti e vuole una nota decisionale con priorità operative, risultati analizzati in esteso, risultati aggiuntivi sintetici e audit trail.
+description: Monitora consultazioni di mercato, avvisi esplorativi e bandi Consip rilevanti per un settore o una tecnologia, e produce una nota decisionale con priorità operative, risultati analizzati in esteso, risultati aggiuntivi sintetici e audit trail. Usa questa skill ogni volta che l'utente parla di consultazioni esplorative o preliminari di mercato, avvisi esplorativi, "call for input" Consip, RdA, bandi o accordi quadro Consip aperti, monitoraggio di forniture o opportunità Consip su un settore/categoria/vendor — anche se non nomina esplicitamente "Consip" o "consultazione".
 argument-hint: "<settore> [tecnologia]"
 disable-model-invocation: true
 allowed-tools:
@@ -39,6 +39,8 @@ Estrai:
 
 Se mancano sia `settore` sia `tecnologia`, chiedi all'utente di specificare almeno uno dei due.
 
+Non è disponibile un filtro geografico: gli strumenti Consip non lo espongono. La ricerca copre le consultazioni e i bandi Consip a livello nazionale; se l'utente chiede un taglio regionale, dichiaralo come limite in `## Dati non disponibili`.
+
 ### Costruzione query
 
 - se sono presenti `settore` e `tecnologia`: query base = `"<settore> <tecnologia>"`
@@ -73,8 +75,9 @@ Regole:
 - consultazione o avviso esplorativo con termine non trascorso → `consultazione_aperta`
 - consultazione o avviso esplorativo con termine trascorso → `consultazione_chiusa`
 - bando / RdA / accordo quadro / avviso di gara con termine non trascorso → `bando_aperto`
+- documento senza data di scadenza disponibile → classificalo per tipo (consultazione/avviso esplorativo → `consultazione_aperta`; bando/RdA → `bando_aperto`), non assumere che il termine sia trascorso, e annota la scadenza mancante in `## Dati non disponibili`.
 
-Se la classificazione resta ambigua, scegli l'interpretazione più prudente e dichiaralo in `## Dati non disponibili`.
+Se la classificazione resta ambigua, scegli l'interpretazione più prudente (tipicamente "aperta", per non escludere un'opportunità ancora valida) e dichiaralo in `## Dati non disponibili`.
 
 ## Deduplica e ordinamento
 
