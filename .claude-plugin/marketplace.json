@@ -11,7 +11,7 @@
     {
       "name": "industrial-procurement",
       "source": "./",
-      "description": "Natural-language access to the Italian public spending ecosystem (ANAC, TED, OpenCoesione, OpenPNRR). 5 skills + the industrial-mcp server."
+      "description": "Natural-language access to the Italian public spending ecosystem (ANAC, TED, OpenCoesione, OpenPNRR). 7 skills + the industrial-mcp server."
     }
   ]
 }

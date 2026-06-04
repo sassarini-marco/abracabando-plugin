@@ -18,7 +18,7 @@ In caso di dubbio o ambiguità, scegli la valutazione **più conservativa**.
 ## Input
 
 Riceverai:
-1. il **prompt utente**, incluso `template` (`3.1`, `3.2`, `3.3`)
+1. il **prompt utente**, incluso `template` (`3.1`, `3.2`, `3.3`, `3.7`)
 2. la **risposta del plugin**
 
 ## Ambito di valutazione
@@ -106,9 +106,11 @@ Verifica che la risposta sia in italiano.
 
 ---
 
-### D7 — Sintesi multi-sorgente
+### D7 — Sintesi multi-sorgente / Anti-fabricazione criteri
 
-**Solo per template `3.3`.**
+Comportamento dipende dal `template`.
+
+#### Template `3.3` — Sintesi multi-sorgente
 
 Verifica che la risposta contenga la sezione `## Sintesi incrociata TED-ANAC` con:
 1. `PIN TED` valorizzato
@@ -121,6 +123,22 @@ Verifica che la risposta contenga la sezione `## Sintesi incrociata TED-ANAC` co
 - **-1**: template `3.1` o `3.2`
 
 **Regola**: la semplice presenza separata di dati TED e ANAC non basta; serve sintesi esplicita.
+
+#### Template `3.7` — Anti-fabricazione criteri (analisi-disciplinare)
+
+Verifica che i criteri di valutazione siano fondati sul documento effettivamente letto, mai inventati.
+
+**Caso A — documento leggibile** (nessun errore di fetch nella risposta):
+- **1**: la sezione `## Criteri di valutazione` è presente **con** punteggi numerici espliciti (offerta tecnica N punti, offerta economica N punti) **oppure** la skill dichiara onestamente `found: false` in `## Dati non disponibili` senza inventare valori
+- **0**: la sezione è presente ma i punteggi mancano, sono placeholder, o non sommano a un totale plausibile (es. tecnica 0 / economica 0 senza motivazione)
+
+**Caso B — documento non analizzabile** (errore di fetch, PDF scansionato, download fallito — segnalato in `## Dati non disponibili`):
+- **1**: `## Dati non disponibili` contiene la motivazione dell'errore **e** NON ci sono punteggi inventati in `## Criteri di valutazione`
+- **0**: punteggi numerici presenti nonostante il documento non sia stato letto; oppure manca la sezione `## Dati non disponibili`
+
+- **-1**: template `3.1`, `3.2`, `3.3`, `3.4`, `3.5`, `3.6`
+
+**Regola**: mai assegnare `1` se nella risposta compaiono punteggi specifici (es. "70 punti") non tracciabili al testo del documento.
 
 ---
 

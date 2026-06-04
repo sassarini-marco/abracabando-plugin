@@ -44,6 +44,7 @@ TEMPLATE_TO_SKILL: dict[str, str] = {
     "3.4": "digest-pregara",
     "3.5": "profilo-sa",
     "3.6": "reconciliation-pnrr",
+    "3.7": "analisi-disciplinare",
 }
 
 # Layers that do NOT count as a failure for the hard gate.
@@ -420,11 +421,11 @@ def print_staleness_table(rows: list[dict]) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(
-        description="Evaluation harness for the industrial-procurement skills (6 skills)."
+        description="Evaluation harness for the industrial-procurement skills."
     )
     ap.add_argument(
         "--template",
-        choices=["3.1", "3.2", "3.3", "3.4", "3.5", "3.6"],
+        choices=["3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7"],
         help="Run only cases for this template.",
     )
     ap.add_argument(
@@ -465,6 +466,10 @@ def main() -> None:
         default=None,
         help="Per-case timeout in seconds (default: 900 frozen / 1500 live).",
     )
+    ap.add_argument(
+        "--case",
+        help="Run only this specific case ID (e.g. 3.7-001).",
+    )
     args = ap.parse_args()
 
     # Frozen is the default when neither flag is given.
@@ -474,6 +479,8 @@ def main() -> None:
     dataset = json.loads((BENCH / "dataset" / "eval_dataset.json").read_text())
     cases = dataset["cases"]
 
+    if args.case:
+        cases = [c for c in cases if c["id"] == args.case]
     if args.template:
         cases = [c for c in cases if c["template"] == args.template]
     if args.skill:

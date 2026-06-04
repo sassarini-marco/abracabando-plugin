@@ -555,6 +555,125 @@
         "D7": "judge"
       },
       "refresh_instructions": "Edge: CUP presente ma importi non riconciliabili; golden vuoto atteso."
+    },
+    {
+      "id": "3.7-001",
+      "skill": "analisi-disciplinare",
+      "scenario": "happy-path",
+      "tier": "live",
+      "template": "3.7",
+      "prompt": "/analisi-disciplinare Analizza il bando di gara disponibile su https://ted.europa.eu/en/notice/338240-2026/pdf (Azienda Zero, CPV 72253000) — estrai criteri di valutazione e requisiti di partecipazione.",
+      "parameters": {
+        "url": "https://ted.europa.eu/en/notice/338240-2026/pdf"
+      },
+      "snapshot_date": "2026-06-04",
+      "frozen_date": "2026-06-04",
+      "ttl_days": 180,
+      "ground_truth_records": [
+        {
+          "source": "ted",
+          "record_id": "338240-2026",
+          "buyer": "Azienda Zero",
+          "cpv": "72253000",
+          "note": "PIN (prior information notice) — consultazione preliminare di mercato, non bando. Criteri di valutazione e requisiti di partecipazione assenti per natura del documento."
+        }
+      ],
+      "empty_reason": "Il documento TED 338240-2026 è un PIN (pin-buyer), non un bando. Criteri di valutazione e requisiti di partecipazione non presenti — corretto dichiarare Dati non disponibili con confidenza Alta.",
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "Documento stabile (TED archivio permanente). Ri-catturare solo se la skill cambia comportamento sui PIN. Atteso: criteri non presenti, confidenza Alta, audit trail fenced, ted_get_notice_xml come tool."
+    },
+    {
+      "id": "3.7-004",
+      "skill": "analisi-disciplinare",
+      "scenario": "happy-path",
+      "tier": "live",
+      "template": "3.7",
+      "prompt": "/analisi-disciplinare Analizza il disciplinare di gara AGCM su https://www.agcm.it/dotcmsdoc/gare/2024/CIG_B16EFD0453_Disciplinare_di_gara_sorveglianza_sanitaria_signed.pdf (CIG B16EFD0453) — estrai criteri di valutazione e requisiti di partecipazione.",
+      "parameters": {
+        "url": "https://www.agcm.it/dotcmsdoc/gare/2024/CIG_B16EFD0453_Disciplinare_di_gara_sorveglianza_sanitaria_signed.pdf",
+        "cig": "B16EFD0453"
+      },
+      "snapshot_date": "2026-06-04",
+      "frozen_date": "2026-06-04",
+      "ttl_days": 180,
+      "ground_truth_records": [
+        {
+          "source": "documents",
+          "record_id": "B16EFD0453",
+          "note": "Disciplinare AGCM 2024 — sorveglianza sanitaria. OEPV: tecnica 80pt / economica 20pt. 8 sub-criteri estratti (53/80 pt). Requisiti: contratto analogo quinquennio ≥ EUR 100.000."
+        }
+      ],
+      "empty_reason": null,
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "Flagship demo case. Atteso: tecnica=80, economica=20, found=true, confidence=Alta/Media. Aggiornare ground_truth dopo prima run riuscita."
+    },
+    {
+      "id": "3.7-002",
+      "skill": "analisi-disciplinare",
+      "scenario": "missing-data",
+      "tier": "frozen",
+      "template": "3.7",
+      "prompt": "/analisi-disciplinare Analizza il disciplinare su https://www.comune.test.it/gare/disciplinare-scansionato.pdf (documento scansionato senza layer testo).",
+      "parameters": {
+        "url": "https://www.comune.test.it/gare/disciplinare-scansionato.pdf"
+      },
+      "snapshot_date": "2026-06-04",
+      "frozen_date": "2026-06-04",
+      "ttl_days": 180,
+      "ground_truth_records": [],
+      "empty_reason": "Documento scansionato — MCP restituisce errore 'no text layer'. La skill deve emettere Dati non disponibili senza inventare criteri.",
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "Fixture frozen: risposta MCP hardcoded in bench/fixtures/3.7-002/calls.json. Non richede refresh finché il formato di errore MCP non cambia."
+    },
+    {
+      "id": "3.7-003",
+      "skill": "analisi-disciplinare",
+      "scenario": "edge",
+      "tier": "frozen",
+      "template": "3.7",
+      "prompt": "/analisi-disciplinare Analizza il disciplinare su https://www.regione.test.it/gare/capitolato-lungo.pdf — documento di 90 pagine con criteri parzialmente leggibili (testo troncato).",
+      "parameters": {
+        "url": "https://www.regione.test.it/gare/capitolato-lungo.pdf"
+      },
+      "snapshot_date": "2026-06-04",
+      "frozen_date": "2026-06-04",
+      "ttl_days": 180,
+      "ground_truth_records": [],
+      "empty_reason": null,
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "Fixture frozen: risposta MCP hardcoded in bench/fixtures/3.7-003/calls.json con testo troncato e criteri parziali (confidenza Media attesa)."
     }
   ]
 }

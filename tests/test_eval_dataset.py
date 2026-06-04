@@ -111,6 +111,7 @@ SKILL_TO_PREFIX = {
     "digest-pregara": "/digest-pregara ",
     "profilo-sa": "/profilo-sa ",
     "reconciliation-pnrr": "/reconciliation-pnrr ",
+    "analisi-disciplinare": "/analisi-disciplinare ",
 }
 SCENARIOS = {"happy-path", "missing-data", "edge"}
 
@@ -125,7 +126,7 @@ def test_eval_prompts_have_skill_prefix():
         )
 
 
-def test_dataset_covers_all_six_skills_three_scenarios():
+def test_dataset_covers_all_skills_three_scenarios():
     schema = json.loads(SCHEMA_PATH.read_text())
     data = json.loads(DATASET_PATH.read_text())
     jsonschema.validate(data, schema)

@@ -1,0 +1,17 @@
+[
+  {
+    "tool": "document_fetch_text",
+    "params": {
+      "url": "https://www.comune.test.it/gare/disciplinare-scansionato.pdf"
+    },
+    "key": "7a3f9c2e1b5d8f4a0e6c3b9d2f7a1e4c8b5d9f3a2e6c0b4d8f1a5e9c3b7d0f4a",
+    "response": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"source\": \"documents\", \"error\": \"PDF has no text layer (likely scanned); OCR not supported\", \"hint\": \"https://www.comune.test.it/gare/disciplinare-scansionato.pdf\", \"detail\": {\"page_count\": 18, \"size_bytes\": 3145728}}"
+        }
+      ]
+    }
+  }
+]

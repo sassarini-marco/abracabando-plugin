@@ -1,3 +1,7 @@
+> **Query:** /scheda-opportunita Trova opportunità con PIN TED attivo + storico ANAC coerente per Azienda Zero su servizi informatici (CPV 72), con valutazione qualitativa di trasformazione in gara.
+
+---
+
 Dati letti il 2026-05-31
 
 ## Sintesi incrociata TED-ANAC

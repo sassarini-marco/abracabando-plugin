@@ -246,12 +246,24 @@ def _emit(obj: dict) -> None:
 
 
 def _load_tools_list(case_dir: Path, case_tools_list: dict | None) -> dict:
-    """Prefer the shared real tools/list (captured from the live MCP, with full
-    schemas so ToolSearch can discover tools) over a per-case stub."""
+    """Merge shared tools (full schemas) with per-case tools (skill-specific).
+
+    The shared file has the full tool schemas so ToolSearch can work. The
+    per-case file declares tools specific to a new skill not yet in the shared
+    list. We merge: start with shared, add any per-case tools not already
+    present by name.
+    """
     shared = FIXTURES_ROOT / "tools_list.json"
-    if shared.exists():
-        return json.loads(shared.read_text())
-    return case_tools_list or {"tools": []}
+    base: dict = json.loads(shared.read_text()) if shared.exists() else {"tools": []}
+
+    per_case: dict = case_tools_list or {}
+    if per_case.get("tools"):
+        existing_names = {t["name"] for t in base.get("tools", [])}
+        for tool in per_case["tools"]:
+            if tool["name"] not in existing_names:
+                base.setdefault("tools", []).append(tool)
+
+    return base or {"tools": []}
 
 
 def serve_replay(case_dir: Path) -> None:

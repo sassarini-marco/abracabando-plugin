@@ -1,3 +1,7 @@
+> **Query:** /digest-pregara Prepara un digest pre-gara per le procedure imminenti su servizi di ingegneria e architettura (CPV 71000000) in Puglia.
+
+---
+
 Dati letti il 2026-05-28
 
 # Digest pre-gara — Servizi di ingegneria e architettura, Puglia

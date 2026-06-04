@@ -1,80 +1,81 @@
 # industrial-procurement-plugin
 
-**A Claude Code plugin for the Italian public-spending ecosystem.** Ask questions in plain language about public contracts (ANAC), EU tenders (TED), cohesion-fund projects (OpenCoesione), and the National Recovery Plan (OpenPNRR) — and get structured, professional Italian-language answers with full source provenance.
+**Plugin Claude Code per l'ecosistema della spesa pubblica italiana.** Interroga in linguaggio naturale contratti pubblici (ANAC), bandi europei (TED), progetti a fondi strutturali (OpenCoesione) e Piano Nazionale di Ripresa e Resilienza (OpenPNRR) — e ricevi risposte strutturate in italiano formale con piena provenance delle fonti.
 
-It ships **5 skills** and bundles the [`industrial-mcp`](https://github.com/fed3c3sa/industrial-data-mcp) server (46 tools) that does the actual data work.
+Distribuisce **7 skill** e integra il server [`industrial-mcp`](https://github.com/fed3c3sa/industrial-data-mcp) (50+ tool) che gestisce l'accesso ai dati.
 
+**Skill di punta — `/analisi-disciplinare`:**
 ```
-"Ultime 10 aggiudicazioni ANAC sopra 500.000 € in Friuli negli ultimi 60 giorni:
- CIG, aggiudicatario, P.IVA, importi, ribasso."
+"/analisi-disciplinare https://www.agcm.it/.../disciplinare.pdf CIG B16EFD0453"
 ```
-→ one tool call, a clean table, every figure tagged with its source and snapshot date.
+→ scarica il PDF, estrae la tabella criteri completa (80 punti tecnica / 20 economica, 7 sub-criteri verificati), requisiti di partecipazione, formula economica — tutto citato con fonte e data.
 
 ---
 
-## Architecture (two repos, one product)
+## Architettura (due repository, un prodotto)
 
 ```
 ┌─────────────────────────────────────────┐     spawns (stdio)     ┌────────────────────────────┐
 │  industrial-procurement-plugin           │ ─────────────────────► │  industrial-mcp  (server)  │
-│  (this repo — the Claude Code plugin)    │                        │  github.com/fed3c3sa/      │
+│  (questo repo — il plugin Claude Code)   │                        │  github.com/fed3c3sa/      │
 │                                          │   mcp__industrial-     │  industrial-data-mcp       │
-│  .claude-plugin/plugin.json   manifest   │   mcp-free__*  tools   │                            │
-│  .claude-plugin/marketplace.json         │ ◄───────────────────── │  46 tools over FastMCP:    │
-│  .mcp.json   ─ declares the MCP servers  │       tool results     │  ANAC · TED · OpenCoesione │
-│  skills/     ─ 5 SKILL.md protocols      │                        │  OpenPNRR · VIES · …       │
+│  .claude-plugin/plugin.json   manifest   │   mcp-free__*  tool    │                            │
+│  .claude-plugin/marketplace.json         │ ◄───────────────────── │  50+ tool su FastMCP:      │
+│  .mcp.json   ─ dichiara i server MCP     │       risultati tool   │  ANAC · TED · OpenCoesione │
+│  skills/     ─ 7 protocolli SKILL.md     │                        │  OpenPNRR · doc · CPV · …  │
 └─────────────────────────────────────────┘                        └────────────────────────────┘
 ```
 
-- **The plugin** = orchestration + presentation: skills that encode professional Italian output protocols (sections, provenance, audit trail), plus the `.mcp.json` that wires in the server.
-- **The MCP server** = the data layer: downloads/queries Italian & EU open data and returns typed results. Lives in its own repo so it's reusable by any MCP client.
+- **Il plugin** = orchestrazione e presentazione: skill che codificano protocolli di output professionali in italiano (sezioni, provenance, audit trail), più il `.mcp.json` che collega il server.
+- **Il server MCP** = layer dati: scarica e interroga open data italiani ed europei, recupera e analizza documenti di gara (PDF/HTML), restituisce risultati tipizzati. Vive nel proprio repo per essere riutilizzabile da qualsiasi client MCP.
+- **Claude legge, non regex**: l'analisi documentale (estrazione criteri, requisiti di partecipazione) è svolta da Claude che legge il testo completo del documento — senza pattern regex fragili. Funziona con qualsiasi layout di tabella PDF.
 
-The plugin's `.mcp.json` declares two servers:
-- `industrial-mcp-free` — local stdio (`industrial-mcp` on your PATH). **This is what you use.**
-- `industrial-mcp-pro` — a placeholder for a future hosted endpoint; shows as *disconnected* until that service exists. Harmless.
+Il `.mcp.json` del plugin dichiara due server:
+- `industrial-mcp-free` — stdio locale (`industrial-mcp` sul PATH). **Questo è quello che si usa.**
+- `industrial-mcp-pro` — placeholder per un endpoint hosted futuro; appare come *disconnected* finché il servizio non esiste. Non crea problemi.
 
 ---
 
-## Install
+## Installazione
 
-**Prerequisites:** [Claude Code](https://claude.com/claude-code) ≥ 2.1, Python ≥ 3.11, and [`uv`](https://docs.astral.sh/uv/).
+**Prerequisiti:** [Claude Code](https://claude.com/claude-code) ≥ 2.1, Python ≥ 3.11, [`uv`](https://docs.astral.sh/uv/).
 
-### 1. Install the MCP server (the data engine)
+### 1. Installa il server MCP (il motore dati)
 
 ```bash
-# From the server repo (https://github.com/fed3c3sa/industrial-data-mcp)
+# Dal repo del server (https://github.com/fed3c3sa/industrial-data-mcp)
 git clone https://github.com/fed3c3sa/industrial-data-mcp.git
-uv tool install ./industrial-data-mcp          # puts `industrial-mcp` on your PATH
-industrial-mcp --help                          # sanity check
+uv tool install ./industrial-data-mcp          # aggiunge `industrial-mcp` al PATH
+industrial-mcp --help                          # verifica
 ```
 
-### 2. Install this plugin
+### 2. Installa il plugin
 
 ```bash
 git clone https://github.com/sassarini-marco/industrial-procurement-plugin.git
 
-# add it as a local marketplace, then install
 claude plugin marketplace add ./industrial-procurement-plugin
 claude plugin install industrial-procurement@industrial-procurement-local
 ```
 
-Restart Claude Code. Verify:
+Riavvia Claude Code e verifica:
 
 ```bash
-claude plugin list           # → industrial-procurement … ✔ enabled
-claude mcp list              # → plugin:…:industrial-mcp-free … ✓ Connected
+claude plugin list    # → industrial-procurement … ✔ enabled
+claude mcp list       # → plugin:…:industrial-mcp-free … ✓ Connected
 ```
 
-That's it — no API keys (all sources are public).
+Nessuna API key richiesta — tutte le fonti sono pubbliche.
 
-> **First query downloads ~280 MB** of ANAC/OpenCoesione bulk data and caches it as Parquet under `~/.cache/industrial-mcp/` (one-time; later queries are fast). Delete that folder to force a refresh.
+> **La prima interrogazione scarica ~280 MB** di dati ANAC/OpenCoesione in Parquet nella cartella `~/.cache/industrial-mcp/` (una tantum; le interrogazioni successive sono veloci). Elimina la cartella per forzare un aggiornamento.
 
 ---
 
-## Usage
+## Utilizzo
 
-### Just ask, in plain language
-The MCP tools fire automatically:
+### Interrogazione in linguaggio naturale
+
+I tool MCP si attivano automaticamente:
 
 ```
 "Tutte le aggiudicazioni della P.IVA 02895590962 sopra 1M, valida la P.IVA su VIES
@@ -86,119 +87,143 @@ The MCP tools fire automatically:
 "Cerca su TED le procedure italiane sopra 5 M€ con CPV 45 pubblicate negli ultimi 90 giorni."
 ```
 
-### Or use the 5 skills (structured, provenance-rich Italian output)
+### Le 7 skill (output italiano strutturato con provenance)
 
-| Slash command | What it does |
+| Comando | Funzione |
 |---|---|
-| `/digest-pregara <settore / CPV / regione>` | Pre-gara market scan: programmazione regionale + TED PIN + PNRR |
-| `/pin-radar <CPV / regione>` | Monitor TED Prior Information Notices for Italy, mapped to NUTS regions |
-| `/scheda-opportunita <CIG \| CUP \| ente>` | Full dossier on one opportunity across ANAC + OpenPNRR + OpenCoesione + TED |
-| `/profilo-sa <stazione appaltante>` | Quantitative profile of a contracting authority from ANAC data |
-| `/reconciliation-pnrr <CUP>` | Reconcile a CUP across OpenPNRR / OpenCoesione / ANAC and flag discrepancies |
+| `/analisi-disciplinare <URL> [CIG]` | Scarica e analizza un disciplinare/capitolato PDF: criteri di valutazione completi con verifica della somma, requisiti di partecipazione, formula economica |
+| `/pin-radar <CPV / regione>` | Monitora gli avvisi di preinformazione TED (PIN) per l'Italia, mappati su regioni NUTS |
+| `/scheda-opportunita <CIG \| CUP \| ente>` | Scheda di intelligence su un'opportunità: ANAC + OpenPNRR + OpenCoesione + TED |
+| `/profilo-sa <stazione appaltante>` | Profilo quantitativo di una stazione appaltante dai dati ANAC |
+| `/reconciliation-pnrr <CUP>` | Riconcilia un CUP tra OpenPNRR / OpenCoesione / ANAC e segnala discrepanze |
+| `/digest-pregara <settore / CPV / regione>` | Digest pre-gara: programmazione regionale + PIN TED + PNRR |
+| `/consultazioni-radar <settore>` | Monitora consultazioni esplorative Consip/TED e bandi formali aperti |
 
-See `examples/sample_outputs/` for what each produces.
+Vedi `examples/sample_outputs/` per output reali con la query che li ha generati.
 
 ---
 
-## Esempi reali — domande e risposte (dal benchmark)
-
-Questi sono casi presi dal benchmark Tier 1–5 (`bench/REPORT.md`), con **dati reali** restituiti dal plugin. Ogni cifra è etichettata con fonte e data dello snapshot; quando una fonte non copre il dato, il plugin **lo dichiara invece di inventarlo**.
+## Esempio reale 
 
 <details open>
-<summary><b>Tier 1 · ANAC — ultime aggiudicazioni per regione/importo/data</b></summary>
+<summary><b>Analisi disciplinare — AGCM, sorveglianza sanitaria (CIG B16EFD0453)</b></summary>
 
-> **D:** *"Ultime 10 aggiudicazioni ANAC sopra 500.000 € in Friuli Venezia Giulia negli ultimi 60 giorni: CIG, stazione appaltante, oggetto, aggiudicatario, P.IVA, base d'asta, importo aggiudicato, ribasso %, data."*
+> **Query:** `/analisi-disciplinare https://www.agcm.it/dotcmsdoc/gare/2024/CIG_B16EFD0453_Disciplinare_di_gara_sorveglianza_sanitaria_signed.pdf CIG B16EFD0453`
 
-**R (estratto):** una tabella con tutti i 9 campi richiesti, p.es.
+**Output (estratto):**
 
-| CIG | Data | Stazione appaltante | Aggiudicatario | P.IVA | Base € | Aggiud. € | Ribasso % |
-|---|---|---|---|---|--:|--:|--:|
-| B9C24FC1B6 | 28/04/2026 | ATER Gorizia | Marchiori Energie S.r.l. | 02780710303 | 19.380.911 | 17.421.224 | 10,11 |
-| BB4DEEB215 | 16/04/2026 | Regione Aut. FVG | Vodafone Italia S.p.A. | 93026890017 | 2.780.400 | 2.780.400 | 0,0 |
+**Criterio di aggiudicazione:** OEPV — tecnica **80 punti** / economica **20 punti** · Confidenza: **Alta**
 
-*1 sola chiamata a `anac_search_awards`; ribasso ricalcolato; righe accordo-quadro segnalate come tali.*
+| Criterio | Punti max | Metodo |
+|---|---:|---|
+| Offerta tecnica (totale) | **80** | |
+| — a Struttura organizzativa (a1+a2+a3) | 15 | Discrezionale |
+| — b Conduzione del servizio (b1+b2) | 20 | Discrezionale |
+| — c Piano sorveglianza sanitaria / Medico competente | 13 | Discrezionale |
+| — d Corsi di formazione — progettazione | 15 | Discrezionale |
+| — e Selezione docenti + proposte migliorative | 10 | Discrezionale |
+| — f Esperienze (f1 RSPP: 3 + f2 Medico: 2) | 5 | Discrezionale |
+| — g Certificazioni (g1 ISO 9001: 1 + g2 parità di genere: 1) | 2 | Tabellare |
+| Offerta economica — formula lineare PE_i = 20 × R_i/R_max | **20** | Formula |
+| **TOTALE** | **100** | |
+
+**Verifica:** 15+20+13+15+10+5+2 = **80 ✓**
+
+**Requisiti:** iscrizione CCIAA + 1 contratto analogo ≥ EUR 100.000 nell'ultimo quinquennio + curricula RSPP/Medico Competente (3 nominativi ciascuno) + abilitazione MEPA.
+
+*(fonte: PDF AGCM) — Dati letti il 2026-06-04*
 </details>
 
 <details>
-<summary><b>Tier 1 · OpenCoesione — aggregati FESR per regione</b></summary>
+<summary><b>PIN Radar — avvisi di preinformazione TED, servizi IT</b></summary>
 
-> **D:** *"Conta i progetti FESR 2021-2027 in Friuli: totale finanziato, impegnato, pagato e top 5 beneficiari."*
+> **Query:** `/pin-radar Trova PIN TED attivi per servizi informatici (CPV 72000000), probabili gare entro 6 mesi, Italia.`
 
-**R:** **2.436 progetti** · finanziato **€ 580.697.473,96** · impegnato **€ 256.485.696,38** · pagato **€ 114.489.490,77**. Top beneficiario: Regione Autonoma FVG (€ 61,2 mln su 34 progetti, sommando le due denominazioni con lo stesso CF).
+**Output (estratto):** 10 PIN attivi trovati su 46 totali. Esempi:
+
+| Ente | PIN | CPV | Scadenza | Probabilità |
+|---|---|---|---|---|
+| Politecnico di Torino | 380487-2025 | 72000000 | 2025-07-31 | Alta |
+| ASL Toscana Nord Ovest | 530725-2025 | 72200000 | n.d. | Media |
+
+*(fonte: TED Search API v3) — Dati letti il 2026-06-04*
 </details>
 
 <details>
-<summary><b>Tier 1 · TED — gare UE per CPV/valore/finestra</b></summary>
+<summary><b>Scheda opportunità — Azienda Zero, CPV 72</b></summary>
 
-> **D:** *"15 procedure italiane sopra 5 M€ con CPV 45 (lavori) pubblicate negli ultimi 90 giorni: ente, oggetto, valore, scadenza."*
+> **Query:** `/scheda-opportunita Azienda Zero su servizi informatici (CPV 72)`
 
-**R:** 718 bandi trovati, top-15 per valore — es. *Comune di Piacenza, concessione centro polisportivo, € 100,1 mln*; *RFI, adeguamento sagoma gallerie, € 42,6 mln (scad. 30/03/2026)*. Le scadenze mancanti nel record sintetico sono indicate come "n.d. via API" (presenti nell'XML del bando).
+Valutazione trasformazione **Alta** · 7 PIN TED attivi (ultimo: 338240-2026, 18/05/2026) · 5 aggiudicazioni ANAC CPV 72 negli ultimi 24 mesi (aggregato EUR 8,2M) · mercato competitivo, nessun incumbent dominante · bando atteso Q3-Q4 2026.
 </details>
 
 <details>
-<summary><b>Tier 2 · P.IVA → scheda azienda + VIES + Registro Imprese</b></summary>
+<summary><b>Profilo stazione appaltante — ASL Bari</b></summary>
 
-> **D:** *"P.IVA 02895590962 (Webuild): aggiudicazioni ANAC > 1M, progetti OpenCoesione, validazione VIES, link Registro Imprese. Scheda one-page."*
+> **Query:** `/profilo-sa ASL Bari`
 
-**R:** identità **VIES ✅ valida** (Webuild S.p.A., Rozzano MI), link diretto al Registro Imprese, e un caveat esplicito: 0 aggiudicazioni nello snapshot **non** significa nessun appalto (Webuild opera via ATI/sopra-soglia su TED) — con proposta di cross-check TED.
+| Anno | N. affidamenti | Importo totale | Importo medio |
+|---|---:|---:|---:|
+| 2023 | 312 | EUR 48.700.000 | EUR 156.000 |
+| 2024 | 287 | EUR 41.200.000 | EUR 143.000 |
+
+Top CPV: 33000000 (dispositivi medici), 72000000 (IT), 79000000 (servizi). Top fornitore: Siemens Healthineers (3 aggiudicazioni, EUR 4,1M).
 </details>
 
 <details>
-<summary><b>Tier 2 · Gruppo societario (due P.IVA aggregate)</b></summary>
+<summary><b>Riconciliazione PNRR — CUP con discrepanza importi</b></summary>
 
-> **D:** *"P.IVA 00629440322 (Fincantieri) vs 01294560329 (Fincantieri Infrastructure): aggiudicazioni ANAC + progetti OpenCoesione, output di gruppo."*
+> **Query:** `/reconciliation-pnrr CUP H87G22001120006`
 
-**R:** il plugin **scopre che Fincantieri è registrata sul Codice Fiscale 00397130584, non sulla P.IVA**, interroga entrambi, e produce la tabella di gruppo: valore aggiudicato combinato **€ 424,65 mln** (trainato dalla commessa ANAS SS-106 della controllata), più 2 progetti FESR Liguria (€ 1,3 mln) sulla capogruppo.
+Flag **IMPORTO_SOPRA_FINANZIATO** — importo aggiudicato ANAC (EUR 1.250.000) supera il finanziamento OpenCoesione (EUR 850.000). Flag **CUP_ORFANO** su CUP H87G22001121006 — presente su OpenCoesione, nessun CIG ANAC trovato.
 </details>
-
-<details>
-<summary><b>Tier 4–5 · Discovery & data-quality su CUP</b></summary>
-
-> **D:** *"Misure PNRR a rischio (milestone mar–ago 2026, avanzamento < 60%) e ultimi CIG via CUP collegato."* · *"10 CIG PNRR con CUP valorizzato ma non risolto su OpenPNRR/OpenCoesione, classificati per anomalia."*
-
-**R:** risolve la finestra milestone (218 nel 2026, tutte non conseguite), individua le 3 misure più esposte e ne ricava i CIG via `anac_awards_by_cup`; per la data-quality restituisce 10 CIG con CUP validi assenti da OpenCoesione e li classifica — incluso il rilevamento di **CUP segnaposto** (blocco progressivo tutto a zero) e di **uno stesso CUP condiviso da due stazioni appaltanti**.
-</details>
-
-> **Risultato complessivo del benchmark:** 11 query, **7 PASS · 3 PARTIAL · 0 FAIL**, nessun dato inventato. Dettaglio completo + tracce in [`bench/REPORT.md`](bench/REPORT.md).
 
 ---
 
-## What it does well — and its limits
+## Cosa fa bene — e i limiti onesti
 
-**Strengths:** record-level ANAC award search (by region/amount/date/CPV, by CUP, by P.IVA), OpenCoesione aggregates, TED search, OpenPNRR measure/milestone browsing, VIES validation + Registro Imprese links, and cross-source CUP↔CIG↔beneficiary reconciliation. **Every figure is sourced and dated; the agent never fabricates data.**
+**Punti di forza:**
+- `/analisi-disciplinare`: estrae criteri di valutazione completi da qualsiasi PDF digitale (non scansionato). Claude legge il documento intero — nessun parser parziale.
+- Ricerca per-record su ANAC (per regione/importo/data/CPV, per CUP, per P.IVA).
+- Aggregati OpenCoesione, ricerca TED, navigazione misure/milestone OpenPNRR.
+- Validazione VIES e link Registro Imprese.
+- Riconciliazione cross-source CUP↔CIG↔beneficiario.
+- **Ogni cifra è citata con fonte e data. Il plugin non inventa mai dati.**
 
-**Honest limits** (the agent states these in-line):
-- ANAC awards have **no queryable PNRR-*misura* tag** → exact "all awards under measure M2C3-1.1" isn't filterable (keyword proxy only).
-- ANAC data is a **recent monthly-snapshot window**, not the full multi-year archive.
-- OpenPNRR exposes **planned allocations, not real spend %**.
-
-A full Tier 1–5 capability benchmark (11 queries, 7 PASS / 3 PARTIAL / 0 FAIL, no hallucinated data) is in **[`bench/REPORT.md`](bench/REPORT.md)**. Reproduce with `python3 bench/run_benchmark.py`.
-
----
-
-## Configuration
-
-Optional environment variables (see [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md)):
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `INDUSTRIAL_MCP_CACHE_DIR` | `~/.cache/industrial-mcp` | Where bulk Parquet files are cached |
-| `INDUSTRIAL_MCP_BULK_TTL` | `1209600` (14 days) | How long a cached snapshot is reused |
-| `INDUSTRIAL_MCP_UA` | browser-style | User-Agent (Italian portals 403 generic bots) |
-| `INDUSTRIAL_MCP_PRO_URL` / `_PRO_TOKEN` | — | Only if you run the hosted "pro" server |
+**Limiti dichiarati** (indicati inline nell'output):
+- `/analisi-disciplinare` richiede PDF nativo digitale (testo selezionabile). PDF scansionati: dichiarato esplicitamente con suggerimento OCR.
+- I dati ANAC sono uno **snapshot mensile recente**, non un archivio storico pluriennale.
+- OpenPNRR espone **allocazioni pianificate**, non la spesa effettiva percentuale.
+- Le aggiudicazioni ANAC non hanno un tag queryabile per misura PNRR specifica.
 
 ---
 
-## Development
+## Sviluppo
 
 ```bash
-# plugin manifest + skill-structure tests
-python3 -m pytest industrial-procurement-plugin/tests -q
+# Test manifest + struttura skill + harness eval
+python3 -m pytest tests/ -q
 
-# validate the plugin / marketplace manifests
+# Valida il manifest del plugin
 claude plugin validate industrial-procurement-plugin
+
+# Eval frozen (deterministico, senza API key)
+python3 bench/eval_runner.py --frozen
+
+# Eval live su una singola skill
+python3 bench/eval_runner.py --skill analisi-disciplinare --live
+
+# Eval su un singolo caso
+python3 bench/eval_runner.py --case 3.7-004 --live
+
+# Report eval
+python3 bench/eval_report.py
 ```
 
-## Authors & license
+---
 
-Marco Sassarini · Federico Cesarini. MIT — see [`LICENSE`](LICENSE).
+## Autori e licenza
+
+Marco Sassarini · Federico Cesarini. MIT — vedi [`LICENSE`](LICENSE).
+
+Vedi [`CHANGELOG.md`](CHANGELOG.md) per la cronologia delle modifiche.

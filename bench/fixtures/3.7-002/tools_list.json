@@ -1,0 +1,10 @@
+{
+  "tools": [
+    {
+      "name": "document_fetch_text"
+    },
+    {
+      "name": "anac_award_detail"
+    }
+  ]
+}

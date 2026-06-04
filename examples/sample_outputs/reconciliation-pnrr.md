@@ -1,3 +1,7 @@
+> **Query:** /reconciliation-pnrr Riconcilia gli importi del progetto PNRR con CUP H87G22001120006 tra OpenPNRR, OpenCoesione e ANAC.
+
+---
+
 Dati letti il 2026-05-28
 
 # Riconciliazione PNRR — Misura M2C4-1.1, Comune di Taranto

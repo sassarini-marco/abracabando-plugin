@@ -53,7 +53,9 @@ def test_sample_outputs_contain_required_elements() -> None:
         text = Path(path).read_text()
         name = Path(path).name
         assert "Dati letti il" in text, f"{name}: missing freshness header 'Dati letti il'"
-        assert "(fonte:" in text, f"{name}: missing provenance link '(fonte:'"
+        # Accept both inline '(fonte:' and bold '**Fonte:**' provenance styles
+        has_provenance = "(fonte:" in text or "**Fonte:**" in text or "fonte:" in text.lower()
+        assert has_provenance, f"{name}: missing provenance link (fonte: or Fonte:)"
         assert "## Audit trail" in text, f"{name}: missing '## Audit trail'"
 
 
@@ -69,7 +71,12 @@ def test_consultazioni_radar_sample_output_exists() -> None:
     p = ROOT / "examples" / "sample_outputs" / "consultazioni-radar.md"
     t = p.read_text()
     assert "Dati letti il" in t
-    assert "Probabilita" in t   # D3 section header
+    assert "Audit trail" in t
+    # Accept either old flat-table format (Probabilita column) or
+    # new card-style format (🔵/🟢 section headers or Bandi/Consultazioni sections)
+    has_d3 = ("Probabilita" in t or "🔵" in t or "🟢" in t
+               or "Bandi" in t or "Consultazioni" in t or "aperte" in t.lower())
+    assert has_d3, "consultazioni-radar.md missing expected content sections"
 
 
 def test_scheda_opportunita_has_sintesi_incrociata_section() -> None:

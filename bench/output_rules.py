@@ -160,6 +160,37 @@ def _ground_truth_ids(ground_truth: object) -> list[str]:
     return out
 
 
+def check_no_criteria_fabrication(text: str) -> RuleResult:
+    """When a document is declared unreadable in 'Dati non disponibili', the
+    'Criteri di valutazione' section must not contain fabricated point values.
+
+    Only fires when the D-n-d section explicitly mentions a document-level
+    failure (scanned, not reachable, download error). Ignored otherwise.
+    """
+    dnd_idx = text.find("## Dati non disponibili")
+    if dnd_idx == -1:
+        return RuleResult("no_criteria_fabrication", True, "no Dati non disponibili section")
+
+    dnd_snippet = text[dnd_idx : dnd_idx + 600].lower()
+    unreadable_signals = (
+        "scansionato", "no text layer", "non analizzabile", "non raggiungibile",
+        "download", "errore", "pdf has no text", "corrupt",
+    )
+    doc_unreadable = any(s in dnd_snippet for s in unreadable_signals)
+    if not doc_unreadable:
+        return RuleResult("no_criteria_fabrication", True, "document readable — skip")
+
+    crit_idx = text.find("## Criteri di valutazione")
+    if crit_idx == -1:
+        return RuleResult("no_criteria_fabrication", True, "no Criteri section — ok")
+
+    crit_snippet = text[crit_idx : crit_idx + 1000]
+    fabricated = re.findall(r"\b(\d{1,3})\s+punti\b", crit_snippet, re.IGNORECASE)
+    ok = not fabricated
+    detail = "ok" if ok else f"punti values present while doc declared unreadable: {fabricated}"
+    return RuleResult("no_criteria_fabrication", ok, detail)
+
+
 def run_all_rules(text: str, ground_truth: object = None) -> list[RuleResult]:
     """Run every deterministic output rule and return the results."""
     gt_ids = _ground_truth_ids(ground_truth)
@@ -171,6 +202,7 @@ def run_all_rules(text: str, ground_truth: object = None) -> list[RuleResult]:
         check_no_exposed_tool_names(text),
         check_audit_trail_block(text),
         check_no_fabricated_ids(text, gt_ids),
+        check_no_criteria_fabrication(text),
     ]
 
 
@@ -183,5 +215,6 @@ __all__ = [
     "check_no_exposed_tool_names",
     "check_audit_trail_block",
     "check_no_fabricated_ids",
+    "check_no_criteria_fabrication",
     "run_all_rules",
 ]

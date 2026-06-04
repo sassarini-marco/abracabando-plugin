@@ -1,3 +1,7 @@
+> **Query:** /profilo-sa Costruisci il profilo della stazione appaltante ASL Bari dallo storico aggiudicazioni ANAC.
+
+---
+
 Dati letti il 2026-05-28
 
 # Profilo stazione appaltante — ASL Bari
