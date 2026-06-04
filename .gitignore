@@ -19,6 +19,9 @@ bench/results/_*.log
 .vscode/
 *.swp
 
+# Local Claude Code user settings (never commit)
+.claude/
+
 # Eval harness run outputs (transient -- do not commit)
 bench/eval_results/
 
