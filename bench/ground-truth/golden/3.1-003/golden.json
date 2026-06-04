@@ -3,11 +3,15 @@
   "records": [
     {
       "source": "ted",
-      "record_id": "26125-2026",
-      "buyer": "ASL2 Lanciano Vasto Chieti",
-      "cpv": "72500000",
-      "status": "attivo",
-      "note": "Edge: singolo PIN al confine della finestra temporale"
+      "record_id": "869066-2025",
+      "buyer": "SNAM S.P.A.",
+      "cpv": "71300000"
+    },
+    {
+      "source": "ted",
+      "record_id": "80912-2026",
+      "buyer": "ACI Informatica",
+      "cpv": "72000000"
     }
   ],
   "empty_reason": null

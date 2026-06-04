@@ -1,5 +1,5 @@
 {
   "case_id": "3.6-003",
   "records": [],
-  "empty_reason": "Edge: CUP presente ma senza importi riconciliabili tra le fonti — golden vuoto atteso."
+  "empty_reason": "CUP F96G22000400006 non trovato in OpenPNRR/ANAC/OpenCoesione"
 }

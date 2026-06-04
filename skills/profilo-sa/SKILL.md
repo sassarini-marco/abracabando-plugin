@@ -67,3 +67,5 @@ Segui il formato definito in references/output-format.md.
 - La prima riga dell'output è sempre: `Dati letti il YYYY-MM-DD`
 - Non esporre i nomi degli strumenti MCP nell'output finale.
 - Le sezioni `## Metodologia` e `## Audit trail` sono sempre presenti.
+- `## Audit trail` contiene un **blocco fenced** (` ``` `), non una tabella markdown.
+- Se entrambi i tool restituiscono zero risultati, aggiungi una sezione `## Dati non disponibili` che dichiara esplicitamente che l'ente non è presente negli archivi ANAC consultati.

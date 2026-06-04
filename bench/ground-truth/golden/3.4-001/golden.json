@@ -1,5 +1,5 @@
 {
   "case_id": "3.4-001",
   "records": [],
-  "empty_reason": "PENDING_LIVE_CAPTURE — eseguire bench/ground-truth/capture_golden.py --case 3.4-001 e verificare a mano (tier=live)."
+  "empty_reason": "Golden da catturare dopo verifica manuale — multi-source (OpenPNRR+programmazione+TED)"
 }

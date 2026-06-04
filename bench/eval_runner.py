@@ -542,6 +542,10 @@ def main() -> None:
         )
         result["timed_out"] = run.get("timed_out", False)
         partial_results[cid] = result
+        # Write immediately so an interrupted run leaves partial results on disk.
+        EVAL_RESULTS.mkdir(exist_ok=True)
+        out_path = EVAL_RESULTS / f"{cid}.json"
+        out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2))
         d2 = result["d2_recall"]
         d2_str = "N/A" if d2 is None else f"{d2:.2f}"
         extra = ""
@@ -570,15 +574,15 @@ def main() -> None:
     else:
         judge_results = {}
 
-    # Merge and write results.
+    # Merge judge dimensions into already-written per-case files.
     for case in cases:
         cid = case["id"]
         result = dict(partial_results[cid])
         if cid in judge_results:
             result.update(judge_results[cid])
-        out_path = EVAL_RESULTS / f"{cid}.json"
-        out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2))
-        print(f"  [{cid}] Written -> {out_path}")
+            out_path = EVAL_RESULTS / f"{cid}.json"
+            out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2))
+            print(f"  [{cid}] Updated with judge dims -> {out_path}")
 
     print(f"\nDone. Results in {EVAL_RESULTS}")
 

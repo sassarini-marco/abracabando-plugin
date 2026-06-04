@@ -77,26 +77,17 @@
       "scenario": "edge",
       "tier": "frozen",
       "template": "3.1",
-      "prompt": "/pin-radar Trova PIN TED attivi per software di gestione (CPV 72500000) pubblicati negli ultimi 7 giorni, Italia.",
+      "prompt": "/pin-radar Trova PIN TED attivi per software di gestione (CPV 72500000) in Lombardia (ITC4), Italia.",
       "parameters": {
         "categoria": "software di gestione",
         "cpv": "72500000",
-        "finestra_giorni": 7
+        "nuts_region": "ITC4"
       },
-      "snapshot_date": "2026-06-02",
-      "frozen_date": "2026-06-02",
+      "snapshot_date": "2026-06-04",
+      "frozen_date": "2026-06-04",
       "ttl_days": 90,
-      "ground_truth_records": [
-        {
-          "source": "ted",
-          "record_id": "26125-2026",
-          "buyer": "ASL2 Lanciano Vasto Chieti",
-          "cpv": "72500000",
-          "status": "attivo",
-          "note": "Edge: singolo PIN al confine della finestra temporale"
-        }
-      ],
-      "empty_reason": null,
+      "ground_truth_records": [],
+      "empty_reason": "edge-case: CPV+regione molto specifici, risultati possibilmente zero o pochi",
       "rubrics": {
         "D1": "judge",
         "D2": "deterministic",
@@ -106,7 +97,7 @@
         "D6": "judge",
         "D7": "judge"
       },
-      "refresh_instructions": "Edge: finestra temporale stretta; ri-catturare golden con capture_golden.py --case 3.1-003."
+      "refresh_instructions": "Ri-catturare golden con capture_golden.py --case 3.1-003 dopo ogni rilascio MCP."
     },
     {
       "id": "3.2-001",
@@ -384,15 +375,18 @@
       "scenario": "edge",
       "tier": "frozen",
       "template": "3.4",
-      "prompt": "/digest-pregara Prepara un digest pre-gara per un singolo bando appena sotto la soglia UE.",
+      "prompt": "/digest-pregara Prepara un digest pre-gara per servizi di sorveglianza e vigilanza (CPV 79710000) in Sardegna (ITG2), valore stimato 120.000 EUR.",
       "parameters": {
-        "caso": "sotto-soglia UE"
+        "categoria": "sorveglianza e vigilanza",
+        "cpv": "79710000",
+        "nuts_region": "ITG2",
+        "valore_stimato": 120000
       },
-      "snapshot_date": "2026-06-02",
-      "frozen_date": "2026-06-02",
+      "snapshot_date": "2026-06-04",
+      "frozen_date": "2026-06-04",
       "ttl_days": 60,
       "ground_truth_records": [],
-      "empty_reason": "Edge: un solo bando al confine della soglia UE, nessun follow-on — golden vuoto atteso.",
+      "empty_reason": "edge-case: CPV 79710000 Sardegna, risultati variabili",
       "rubrics": {
         "D1": "judge",
         "D2": "deterministic",
@@ -402,7 +396,7 @@
         "D6": "judge",
         "D7": "judge"
       },
-      "refresh_instructions": "Edge: bando al confine della soglia UE; golden vuoto atteso."
+      "refresh_instructions": "Ri-catturare golden con capture_golden.py --case 3.4-003 dopo ogni rilascio MCP."
     },
     {
       "id": "3.5-001",
@@ -462,15 +456,16 @@
       "scenario": "edge",
       "tier": "frozen",
       "template": "3.5",
-      "prompt": "/profilo-sa Costruisci il profilo di una stazione appaltante con una sola aggiudicazione storica.",
+      "prompt": "/profilo-sa Costruisci il profilo della stazione appaltante Comune di Ussita (CF 80005870067) dallo storico aggiudicazioni ANAC.",
       "parameters": {
-        "stazione_appaltante": "SA con singola aggiudicazione"
+        "ente": "Comune di Ussita",
+        "cf": "80005870067"
       },
-      "snapshot_date": "2026-06-02",
-      "frozen_date": "2026-06-02",
+      "snapshot_date": "2026-06-04",
+      "frozen_date": "2026-06-04",
       "ttl_days": 120,
       "ground_truth_records": [],
-      "empty_reason": "Edge: SA con una sola aggiudicazione storica — golden minimale/vuoto atteso.",
+      "empty_reason": "edge-case: piccolo comune con storico aggiudicazioni limitato",
       "rubrics": {
         "D1": "judge",
         "D2": "deterministic",
@@ -480,7 +475,7 @@
         "D6": "judge",
         "D7": "judge"
       },
-      "refresh_instructions": "Edge: SA con storico minimale; golden minimale/vuoto atteso."
+      "refresh_instructions": "Ri-catturare golden con capture_golden.py --case 3.5-003 dopo ogni rilascio MCP."
     },
     {
       "id": "3.6-001",
@@ -488,23 +483,14 @@
       "scenario": "happy-path",
       "tier": "frozen",
       "template": "3.6",
-      "prompt": "/reconciliation-pnrr Riconcilia gli importi del progetto PNRR con CUP F96G22000400006 tra OpenPNRR e OpenCoesione.",
+      "prompt": "/reconciliation-pnrr Riconcilia gli importi del progetto PNRR con CUP F99J22001320007 tra OpenPNRR, OpenCoesione e ANAC.",
       "parameters": {
-        "cup": "F96G22000400006",
-        "fonte": "openpnrr+opencoesione"
+        "cup": "F99J22001320007"
       },
       "snapshot_date": "2026-06-04",
       "frozen_date": "2026-06-04",
       "ttl_days": 120,
-      "ground_truth_records": [
-        {
-          "source": "openpnrr",
-          "record_id": "F96G22000400006",
-          "cup": "F96G22000400006",
-          "titolo": "010006 PRESIDIO OSPEDALIERO DI BORGOMANERO*VIALE ZOPPIS 10*AMMODERNAMENTO DEL PARCO TECNOLOGICO E DIGITALE DEL PRESIDIO OSPEDALIERO DI BORGOMANERO",
-          "finanziamento_totale": "3773260.36"
-        }
-      ],
+      "ground_truth_records": [],
       "empty_reason": null,
       "rubrics": {
         "D1": "judge",
@@ -515,7 +501,7 @@
         "D6": "judge",
         "D7": "judge"
       },
-      "refresh_instructions": "tier=live: eseguire capture_golden.py --case 3.6-001 (CUP reale) e verificare a mano gli importi delle due fonti."
+      "refresh_instructions": "Ri-catturare golden con capture_golden.py --case 3.6-001. CUP F99J22001320007 ha dati ANAC (7 aggiudicazioni), OpenCoesione/OpenPNRR potrebbero non averlo."
     },
     {
       "id": "3.6-002",

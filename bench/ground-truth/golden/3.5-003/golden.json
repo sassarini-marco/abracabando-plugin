@@ -1,5 +1,21 @@
 {
   "case_id": "3.5-003",
-  "records": [],
-  "empty_reason": "Edge: SA con una sola aggiudicazione storica — golden minimale/vuoto atteso."
+  "records": [
+    {
+      "source": "anac",
+      "record_id": "BB7C99D35A",
+      "stazione_appaltante": "COMUNE DI USSITA"
+    },
+    {
+      "source": "anac",
+      "record_id": "BB78E3A171",
+      "stazione_appaltante": "UNIONE MONTANA MARCA DI CAMERINO"
+    },
+    {
+      "source": "anac",
+      "record_id": "BB2FC14E58",
+      "stazione_appaltante": "COMUNE DI USSITA"
+    }
+  ],
+  "empty_reason": null
 }

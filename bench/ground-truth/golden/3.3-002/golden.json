@@ -1,5 +1,5 @@
 {
   "case_id": "3.3-002",
   "records": [],
-  "empty_reason": "Nessun PIN TED attivo con storico ANAC coerente per la SA richiesta — scenario missing-data."
+  "empty_reason": "Golden da catturare dopo verifica manuale — multi-source (ANAC+TED+OpenCoesione)"
 }

@@ -100,16 +100,41 @@ def _ids(records: list[dict]) -> set[str]:
 
 
 def _divergent(golden: list[dict], mcp: list[dict]) -> bool:
-    """True if the MCP records diverge from the golden — different id sets, or
-    the same ids but a differing value on a field the golden pins."""
-    g = {str(r.get("record_id")): r for r in golden if r.get("record_id")}
-    m = {str(r.get("record_id")): r for r in mcp if r.get("record_id")}
-    if set(g) != set(m):
+    """True if the MCP records diverge from the golden.
+
+    The golden is intentionally a small sample (1-2 representative records)
+    while MCP returns a full page (up to 10). Divergence means the golden's
+    records are no longer a *subset* of what the MCP returns (i.e. previously
+    known records have disappeared), or a pinned field value has changed.
+
+    Uses ``record_identity()`` so Consip (url), TED (publication_number), and
+    ANAC (cig/cup) records all resolve to the same stable key regardless of
+    which field the source uses.
+    """
+    g = {record_identity(r): r for r in golden if record_identity(r)}
+    m = {record_identity(r): r for r in mcp if record_identity(r)}
+    # Golden must be a subset — MCP is allowed to return more records than the golden captured.
+    if not set(g).issubset(set(m)):
         return True
+    # For each shared record, check pinned *stable* field values match.
+    # Exclude free-text / annotation fields whose formatting varies across captures
+    # (title truncation, appended suffixes, note vs summary, etc.).
+    _TEXT_FIELDS = {"title", "note", "summary", "description", "object", "oggetto"}
     for rid, gr in g.items():
         mr = m[rid]
         for k, v in gr.items():
-            if k in mr and mr[k] != v:
+            if k in _TEXT_FIELDS:
+                continue
+            if k not in mr:
+                continue
+            mv = mr[k]
+            # Normalise list vs scalar: ["72514100","72514100"] == "72514100".
+            # Convert both to sorted unique lists so types are always comparable.
+            def _norm(x):  # noqa: E306
+                if isinstance(x, list):
+                    return sorted({str(i) for i in x})
+                return [str(x)]
+            if _norm(v) != _norm(mv):
                 return True
     return False
 

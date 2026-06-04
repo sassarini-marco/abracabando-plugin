@@ -1,5 +1,16 @@
 {
   "case_id": "3.5-001",
-  "records": [],
-  "empty_reason": "PENDING_LIVE_CAPTURE — eseguire bench/ground-truth/capture_golden.py --case 3.5-001 e verificare a mano (tier=live)."
+  "records": [
+    {
+      "source": "anac",
+      "record_id": "BB7687DCEB",
+      "stazione_appaltante": "AZIENDA SANITARIA PROVINCIALE DI CATANIA"
+    },
+    {
+      "source": "anac",
+      "record_id": "BB70CB5F67",
+      "stazione_appaltante": "AZIENDA SANITARIA PROVINCIALE DI CATANIA"
+    }
+  ],
+  "empty_reason": null
 }

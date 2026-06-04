@@ -51,11 +51,19 @@ Non è disponibile un filtro geografico: gli strumenti Consip non lo espongono. 
 
 Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
 
+### Strumenti consentiti
+
+**Usa esclusivamente** `consip_search_consultazioni` e `consip_search_bandi`.
+Non chiamare strumenti ANAC (`anac_*`), TED (`ted_*`), download (`download_*`) o
+altri: questa skill copre solo il perimetro Consip. Se l'utente chiede un
+confronto con ANAC o TED, dichiara il limite in `## Dati non disponibili` e
+suggerisci di usare la skill `scheda-opportunita` o `pin-radar`.
+
 ### Sequenza di interrogazione
 
 Interroga sempre, in questo ordine:
-1. consultazioni di mercato;
-2. bandi / RdA.
+1. consultazioni di mercato (`consip_search_consultazioni`);
+2. bandi / RdA (`consip_search_bandi`).
 
 Usa la stessa query base per entrambi.
 

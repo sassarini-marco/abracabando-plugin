@@ -110,3 +110,4 @@ Per la mappatura NUTS, consulta references/nuts-mapping.md (è un collegamento s
 - Usa il vocabolario di confidenza a tre livelli — mai percentuali o punteggi.
 - Non esporre i nomi degli strumenti MCP nell'output finale.
 - Le sezioni `## Metodologia`, `## Dati non disponibili` e `## Audit trail` sono sempre presenti.
+- `## Audit trail` contiene un **blocco fenced** (` ``` `), non una tabella markdown.

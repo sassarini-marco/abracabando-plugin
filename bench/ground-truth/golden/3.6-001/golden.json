@@ -2,11 +2,16 @@
   "case_id": "3.6-001",
   "records": [
     {
-      "source": "openpnrr",
-      "record_id": "F96G22000400006",
-      "cup": "F96G22000400006",
-      "titolo": "010006 PRESIDIO OSPEDALIERO DI BORGOMANERO*VIALE ZOPPIS 10*AMMODERNAMENTO DEL PARCO TECNOLOGICO E DIGITALE DEL PRESIDIO OSPEDALIERO DI BORGOMANERO",
-      "finanziamento_totale": "3773260.36"
+      "source": "anac",
+      "record_id": "B5B28D28E6",
+      "cup": "F99J22001320007",
+      "cig": "B5B28D28E6"
+    },
+    {
+      "source": "anac",
+      "record_id": "B64ED59903",
+      "cup": "F99J22001320007",
+      "cig": "B64ED59903"
     }
   ],
   "empty_reason": null

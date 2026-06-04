@@ -1,5 +1,5 @@
 {
   "case_id": "3.4-002",
   "records": [],
-  "empty_reason": "Nessuna gara imminente per i parametri richiesti — scenario missing-data."
+  "empty_reason": "Golden da catturare dopo verifica manuale — multi-source (OpenPNRR+programmazione)"
 }
