@@ -1,0 +1,9 @@
+# Ruff config for the industrial-procurement-plugin Python sources (bench/, tests/).
+target-version = "py311"
+line-length = 100
+
+[lint]
+# E/F = pyflakes + pycodestyle, I = import sorting, UP = pyupgrade,
+# B = bugbear, SIM = simplify. Sensible defaults without being noisy.
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]  # line length handled by the formatter, not lint

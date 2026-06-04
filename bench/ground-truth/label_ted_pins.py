@@ -51,7 +51,8 @@ _MCP_SRC = os.path.join(_REPO_ROOT, "industrial-data-mcp", "src")
 if _MCP_SRC not in sys.path:
     sys.path.insert(0, _MCP_SRC)
 
-from industrial_mcp.sources.ted import search_notices, search_pin_italy  # noqa: E402
+# search_pin_italy is re-exported here so tests can patch it on this module.
+from industrial_mcp.sources.ted import search_notices, search_pin_italy  # noqa: E402, F401
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -159,7 +160,7 @@ async def fetch_follow_on(
     nt_clause = " OR ".join(f"notice-type={nt}" for nt in FOLLOW_ON_NOTICE_TYPES)
     date_clause = f"publication-date>={date_from} AND publication-date<={date_to}"
 
-    query_parts = [f"({nt_clause})", f"place-of-performance=ITA", date_clause]
+    query_parts = [f"({nt_clause})", "place-of-performance=ITA", date_clause]
 
     # Add CPV filter if available (use first CPV only to keep query simple)
     if cpv_codes:
@@ -182,7 +183,6 @@ def label_pin(pin: dict[str, Any], follow_ons: list[dict[str, Any]]) -> dict[str
     cpv_str: str = cpv_list[0] if cpv_list else ""
     buyer: str | None = pin.get("buyer")
     pin_date_str: str | None = pin.get("publication_date")
-    pin_date = _parse_date(pin_date_str)
 
     best_cn: dict[str, Any] | None = None
     best_confidence = "none"
@@ -236,14 +236,20 @@ async def run_labelling(
         return []
 
     records: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
     for pin in pins:
         cpv_list: list[str] = pin.get("cpv") or []
         buyer: str | None = pin.get("buyer")
         pin_date = _parse_date(pin.get("publication_date"))
 
         if pin_date is None:
-            # Cannot determine follow-on window — emit a "none" record
-            records.append(label_pin(pin, []))
+            # No (parseable) publication_date -> the follow-on window cannot be
+            # built. Skip the PIN cleanly with a named reason instead of calling
+            # fetch_follow_on with an unbound/None pin_date.
+            skipped.append({
+                "publication_number": pin.get("publication_number"),
+                "skip_reason": "missing_publication_date",
+            })
             continue
 
         follow_ons = await fetch_follow_on(
@@ -252,6 +258,14 @@ async def run_labelling(
             pin_date=pin_date,
         )
         records.append(label_pin(pin, follow_ons))
+
+    if skipped:
+        print(
+            f"[label_ted_pins] skipped {len(skipped)} PIN(s) with "
+            f"missing_publication_date: "
+            f"{[s['publication_number'] for s in skipped]}",
+            file=sys.stderr,
+        )
 
     return records
 

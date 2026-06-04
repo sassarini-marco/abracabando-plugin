@@ -13,8 +13,6 @@ from datetime import date, timedelta
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
-import pytest
-
 # ---------------------------------------------------------------------------
 # Ensure the script is importable from the project root regardless of how
 # pytest is invoked.
@@ -117,3 +115,52 @@ def test_pin_converted_label():
     )
     assert rec["cn_publication_number"] == "234567-2026"
     assert rec["publication_number"] == "123456-2025"
+
+
+# ---------------------------------------------------------------------------
+# Test 3 — missing publication_date is skipped cleanly (hardening / regression)
+# ---------------------------------------------------------------------------
+
+def test_pin_with_missing_publication_date_is_skipped_cleanly():
+    """A PIN lacking ``publication_date`` must produce no label row and must not
+    raise UnboundLocalError/NameError; a PIN with a valid date produces a row
+    whose follow-on window equals pin_date + MIN_DAYS .. +MAX_DAYS."""
+    mod = _load_module()
+
+    pin_date = date(2026, 1, 14)
+    pin_valid = {
+        "publication_number": "26125-2026",
+        "cpv": ["72500000"],
+        "buyer": "ASL2 Lanciano Vasto Chieti",
+        "publication_date": pin_date.strftime("%Y-%m-%d"),
+    }
+    pin_missing = {
+        "publication_number": "999999-2026",
+        "cpv": ["72000000"],
+        "buyer": "Ente Senza Data",
+        # no publication_date key at all
+    }
+
+    state: dict[str, Any] = {"follow_on_queries": []}
+
+    async def fake_search_notices(query, **kwargs):
+        if not state.get("pins_fetched"):
+            state["pins_fetched"] = True
+            return _make_page([pin_valid, pin_missing])
+        state["follow_on_queries"].append(query)
+        return _make_page([])
+
+    with patch.object(mod, "search_notices", new=fake_search_notices):
+        import asyncio
+        records = asyncio.run(mod.run_labelling(cpv_prefix="72", limit=5, dry_run=False))
+
+    nums = [r["publication_number"] for r in records]
+    assert "999999-2026" not in nums, "missing-date PIN must not produce a label row"
+    assert nums == ["26125-2026"]
+
+    assert len(state["follow_on_queries"]) == 1, "follow-on lookup must run only for the dated PIN"
+    q = state["follow_on_queries"][0]
+    expected_from = (pin_date + timedelta(days=mod.FOLLOW_ON_MIN_DAYS)).strftime("%Y%m%d")
+    expected_to = (pin_date + timedelta(days=mod.FOLLOW_ON_MAX_DAYS)).strftime("%Y%m%d")
+    assert expected_from in q, f"expected window start {expected_from} in query {q!r}"
+    assert expected_to in q, f"expected window end {expected_to} in query {q!r}"

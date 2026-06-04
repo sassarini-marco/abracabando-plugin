@@ -1,0 +1,2686 @@
+{
+  "tools": [
+    {
+      "name": "download_head",
+      "description": "HEAD request to inspect a download URL (Content-Type, size, Last-Modified).\n\nUse this before pulling a file — many of the procurement/cohesion\ndatasets are >100 MB.",
+      "inputSchema": {
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "download_file",
+      "description": "Download a file. Small ones come back base64-encoded; large ones return URL + size.\n\nDefault cap is 256 KiB. Increase `max_bytes` only when you need the\ncontents (e.g. CSV under a few MB). For multi-MB ANAC / OpenCoesione\nbulks, return the URL to the user and let them download directly.",
+      "inputSchema": {
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "max_bytes": {
+            "default": 262144,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "anac_list_datasets",
+      "description": "List all dataset slugs published on ANAC's open-data portal.\n\nItalian National Anti-Corruption Authority — public procurement data.\nAbout 70 active datasets including OCDS releases, SmartCIG, PNRR/PNC,\nSOA certifications and Qualificazione Imprese.\n\nReturns slugs you can pass to anac_get_dataset for full details.",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "default": 100,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "description": "Generic wrapper for non-object return types.",
+        "properties": {
+          "result": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "type": "object",
+        "x-fastmcp-wrap-result": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "anac_search_datasets",
+      "description": "Full-text search ANAC datasets.\n\nArgs:\n    query: free-text query (Italian). Empty = list newest.\n    tag: filter by tag. Known tags: 'cig', 'pnrr', 'lavori pubblici',\n        'Qualificazione Imprese'.\n    rows: page size (default 25, max 1000).\n    start: 0-based offset for pagination.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "default": "",
+            "type": "string"
+          },
+          "tag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "rows": {
+            "default": 25,
+            "type": "integer"
+          },
+          "start": {
+            "default": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "description": "Paginated list response.",
+        "properties": {
+          "source": {
+            "description": "Source slug, e.g. 'anac', 'ted'.",
+            "type": "string"
+          },
+          "count": {
+            "description": "Number of items returned in this page.",
+            "type": "integer"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Total matching items if the source reports it."
+          },
+          "offset": {
+            "default": 0,
+            "description": "0-based offset of the first returned item.",
+            "type": "integer"
+          },
+          "next_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Offset to pass back for the next page, or null at end."
+          },
+          "items": {
+            "description": "The actual items; shape depends on the source.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional human-readable note about the result (truncation, etc.)."
+          }
+        },
+        "required": [
+          "source",
+          "count",
+          "items"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "anac_get_dataset",
+      "description": "Fetch full metadata + resource download URLs for one ANAC dataset.\n\nPass the dataset slug or UUID, e.g. 'misurepremiali-pnrrpnc' or\n'cig-pnrr-pnc'. Resources are typically published as ZIP archives\ncontaining CSV, JSON and TTL representations.",
+      "inputSchema": {
+        "properties": {
+          "dataset_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dataset_id"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "groups": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "license": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "modified": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "resources": {
+            "items": {
+              "properties": {
+                "name": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "format": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "url": {
+                  "type": "string"
+                },
+                "description": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "size": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "url"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "landing_page": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "landing_page"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "anac_ocds_bulk_url",
+      "description": "Return ANAC's monthly OCDS bulk-release URL (no HTTP call).\n\nANAC publishes one OCDS 1.1 release file per month under a stable\nURL. Use this tool to get the URL, then download with\nanac_dataset_resource if you need the contents.",
+      "inputSchema": {
+        "properties": {
+          "year": {
+            "type": "integer"
+          },
+          "month": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "year",
+          "month"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "anac_pnrr_datasets",
+      "description": "Convenience: list ANAC datasets mentioning PNRR / PNC.\n\nTypically returns 'misurepremiali-pnrrpnc', 'indicatori-pnrrpnc',\n'cig-pnrr-pnc' (CIG records of PNRR/PNC contracts).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "outputSchema": {
+        "description": "Paginated list response.",
+        "properties": {
+          "source": {
+            "description": "Source slug, e.g. 'anac', 'ted'.",
+            "type": "string"
+          },
+          "count": {
+            "description": "Number of items returned in this page.",
+            "type": "integer"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Total matching items if the source reports it."
+          },
+          "offset": {
+            "default": 0,
+            "description": "0-based offset of the first returned item.",
+            "type": "integer"
+          },
+          "next_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Offset to pass back for the next page, or null at end."
+          },
+          "items": {
+            "description": "The actual items; shape depends on the source.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional human-readable note about the result (truncation, etc.)."
+          }
+        },
+        "required": [
+          "source",
+          "count",
+          "items"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "anac_search_awards",
+      "description": "Search individual ANAC contract awards (aggiudicazioni) with filters.\n\nJoins ANAC's award, tender (bando), and winner tables by CIG and returns\nper-award rows with: CIG, stazione appaltante, oggetto, aggiudicatario,\nP.IVA, importo a base d'asta, importo aggiudicato, ribasso %, data.\n\nArgs:\n    region: Italian region name, matched against the contracting\n        authority's ANAC section (e.g. \"Friuli\", \"Lombardia\").\n    min_amount/max_amount: award amount bounds in EUR.\n    date_from/date_to: award-date bounds, ISO 'YYYY-MM-DD'.\n    cpv_prefix: CPV code prefix, e.g. \"45\" for construction works.\n    query: free-text matched against oggetto and stazione appaltante.\n    limit: max rows (default 10).\n\nFirst call downloads ANAC monthly snapshots (~300 MB total) and caches\nthem as Parquet; subsequent calls are fast. See 'provenance' for the\nsnapshot date and coverage caveats.",
+      "inputSchema": {
+        "properties": {
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "min_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "max_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "date_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "date_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "cpv_prefix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "limit": {
+            "default": 10,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "anac_awards_by_cup",
+      "description": "All ANAC CIGs linked to a given CUP, with winners, amounts and dates.\n\nResolves the CUP→CIG mapping from ANAC's cumulative ``cup`` table, then\nattaches award and winner details. Use this to reconcile a PNRR/cohesion\nproject (identified by CUP) against its procurement contracts.",
+      "inputSchema": {
+        "properties": {
+          "cup": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cup"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "anac_awards_by_piva",
+      "description": "All ANAC awards won by a company, matched on its codice fiscale / P.IVA.\n\nReturns each award (CIG, stazione appaltante, oggetto, amounts, date) plus\nthe summed awarded value. Coverage is limited to the cached monthly\nsnapshot window (see 'provenance').",
+      "inputSchema": {
+        "properties": {
+          "piva": {
+            "type": "string"
+          },
+          "date_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "min_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "limit": {
+            "default": 50,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "piva"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "anac_award_detail",
+      "description": "Full ANAC record for one CIG: tender, award, linked CUP and all soggetti.\n\nUse after finding a CIG (e.g. via anac_search_awards) to get the complete\npicture for a single contract, including every participant/winner role and\nany linked CUP(s).",
+      "inputSchema": {
+        "properties": {
+          "cig": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cig"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "anac_sa_history",
+      "description": "Purchase history of a stazione appaltante from ANAC open data.\n\nGroups aggiudicazioni by year and CPV for a contracting authority\nidentified by codice fiscale (exact match) or name substring (ILIKE).\nReturns total award count and a breakdown by year+CPV.\n\nArgs:\n    cf_or_name: Codice fiscale (11 digits) or name substring.\n    date_from: Award date lower bound, ISO 'YYYY-MM-DD'.\n    date_to: Award date upper bound, ISO 'YYYY-MM-DD'.\n    limit: Max rows in by_year_cpv (default 200).",
+      "inputSchema": {
+        "properties": {
+          "cf_or_name": {
+            "type": "string"
+          },
+          "date_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "date_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "limit": {
+            "default": 200,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "cf_or_name"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "ted_search",
+      "description": "Search EU public-procurement notices (TED v3 Search API).\n\nArgs:\n    query: TED expert-search syntax. Examples:\n        - 'classification-cpv=72000000' (IT services)\n        - 'place-of-performance=ITA AND notice-type=CN' (Italian\n          contract notices)\n        - 'buyer-name=\"ASL ROMA 1\"'\n        - 'publication-date>=20260101 AND publication-date<=20260131'\n        - '*' (all notices in scope)\n    limit: page size (1-250, default 25).\n    page: 1-based page number.\n    scope: 'ACTIVE' (default — open notices), 'LAST_EDITION', or 'ALL'.\n    fields: list of TED field names to return; defaults to a sensible set\n        (publication-number, notice-title, buyer-name, publication-date,\n        place-of-performance, classification-cpv, deadline-receipt-tender-date-lot,\n        notice-type, links).",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "default": "*",
+            "type": "string"
+          },
+          "limit": {
+            "default": 25,
+            "type": "integer"
+          },
+          "page": {
+            "default": 1,
+            "type": "integer"
+          },
+          "scope": {
+            "default": "ACTIVE",
+            "type": "string"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "description": "Paginated list response.",
+        "properties": {
+          "source": {
+            "description": "Source slug, e.g. 'anac', 'ted'.",
+            "type": "string"
+          },
+          "count": {
+            "description": "Number of items returned in this page.",
+            "type": "integer"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Total matching items if the source reports it."
+          },
+          "offset": {
+            "default": 0,
+            "description": "0-based offset of the first returned item.",
+            "type": "integer"
+          },
+          "next_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Offset to pass back for the next page, or null at end."
+          },
+          "items": {
+            "description": "The actual items; shape depends on the source.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional human-readable note about the result (truncation, etc.)."
+          }
+        },
+        "required": [
+          "source",
+          "count",
+          "items"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "ted_pin_italy",
+      "description": "Search Italian Prior Information Notices (PIN) on TED.\n\nPINs signal upcoming procurements before the formal call for tender.\nThis tool always scopes to Italy (place-of-performance=ITA) and\nnotice-type=PIN.\n\nArgs:\n    cpv_codes: CPV codes to filter by (e.g. ['71000000'] for engineering services).\n               Multiple codes are OR-joined.\n    nuts_region: NUTS-1 prefix (e.g. 'ITC' for Nord-Ovest, 'ITI' for Centro) or\n                 NUTS-2 code (e.g. 'ITC4' for Lombardia, 'ITF4' for Puglia). NUTS-1\n                 prefixes are automatically expanded to an OR of their NUTS-2 children.\n    deadline_before: filter to PINs whose consultation deadline is on or before\n                     this date in YYYYMMDD format.\n    limit: page size (1-250, default 25).\n    page: 1-based page number.",
+      "inputSchema": {
+        "properties": {
+          "cpv_codes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "nuts_region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "deadline_before": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "limit": {
+            "default": 25,
+            "type": "integer"
+          },
+          "page": {
+            "default": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "description": "Paginated list response.",
+        "properties": {
+          "source": {
+            "description": "Source slug, e.g. 'anac', 'ted'.",
+            "type": "string"
+          },
+          "count": {
+            "description": "Number of items returned in this page.",
+            "type": "integer"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Total matching items if the source reports it."
+          },
+          "offset": {
+            "default": 0,
+            "description": "0-based offset of the first returned item.",
+            "type": "integer"
+          },
+          "next_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Offset to pass back for the next page, or null at end."
+          },
+          "items": {
+            "description": "The actual items; shape depends on the source.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional human-readable note about the result (truncation, etc.)."
+          }
+        },
+        "required": [
+          "source",
+          "count",
+          "items"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "ted_get_notice_xml",
+      "description": "Download the official XML of a TED notice by publication number.\n\nPublication numbers have the format 'NNNNNN-YYYY' (e.g. '178103-2016').\nThe XML is the authoritative format (eForms for notices ≥ 2024-04,\nTED R2.0.9 for earlier ones).",
+      "inputSchema": {
+        "properties": {
+          "publication_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "publication_number"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "dati_search",
+      "description": "Search Italian national open-data catalog (dati.gov.it).\n\nArgs:\n    query: free-text query (Italian preferred).\n    organization: publisher slug. Use dati_organizations to find these\n        — the slug for ISTAT is 'istituto-nazionale-di-statistica-istat',\n        for INPS is 'inps'.\n    group: theme slug. Valid values: agricoltura, ambiente, cultura,\n        economia, energia, giustizia, governo, internazionali, regioni,\n        salute, scienza, societa, trasporti.\n    format: filter by resource format (CSV, JSON, ZIP, XLSX, SHP, RDF…).\n    rows: page size (default 25, max 1000).\n    start: 0-based offset for pagination.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "default": "",
+            "type": "string"
+          },
+          "organization": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "group": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "rows": {
+            "default": 25,
+            "type": "integer"
+          },
+          "start": {
+            "default": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "description": "Paginated list response.",
+        "properties": {
+          "source": {
+            "description": "Source slug, e.g. 'anac', 'ted'.",
+            "type": "string"
+          },
+          "count": {
+            "description": "Number of items returned in this page.",
+            "type": "integer"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Total matching items if the source reports it."
+          },
+          "offset": {
+            "default": 0,
+            "description": "0-based offset of the first returned item.",
+            "type": "integer"
+          },
+          "next_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Offset to pass back for the next page, or null at end."
+          },
+          "items": {
+            "description": "The actual items; shape depends on the source.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional human-readable note about the result (truncation, etc.)."
+          }
+        },
+        "required": [
+          "source",
+          "count",
+          "items"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "dati_get_dataset",
+      "description": "Fetch full metadata + resources for a dati.gov.it dataset by slug or UUID.",
+      "inputSchema": {
+        "properties": {
+          "dataset_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dataset_id"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "organization": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "groups": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "license": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "modified": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "issued": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "resources": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "landing_page": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "title",
+          "landing_page"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "dati_organizations",
+      "description": "List up to `limit` publisher slugs registered on dati.gov.it.\n\nUseful for finding the exact slug needed by `dati_search(organization=...)`.",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "default": 50,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "description": "Generic wrapper for non-object return types.",
+        "properties": {
+          "result": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "type": "object",
+        "x-fastmcp-wrap-result": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "dati_groups",
+      "description": "List the 13 official thematic groups on dati.gov.it (no HTTP call).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "outputSchema": {
+        "description": "Generic wrapper for non-object return types.",
+        "properties": {
+          "result": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "type": "object",
+        "x-fastmcp-wrap-result": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "opencoesione_list_datasets",
+      "description": "Curated catalog of OpenCoesione bulk downloads (no HTTP call).\n\nOpenCoesione publishes investment-project data for Italian cohesion\nfunds (FESR, FSE, FSC, …) by cycle and region. Each entry includes\nZIP and Parquet download URLs and a landing-page link.\n\nUse this to find the right URL, then call opencoesione_download\nto fetch the file.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "outputSchema": {
+        "description": "Generic wrapper for non-object return types.",
+        "properties": {
+          "result": {
+            "items": {
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "entity": {
+                  "description": "progetti | soggetti | pagamenti | localizzazioni | beneficiari",
+                  "type": "string"
+                },
+                "scope": {
+                  "description": "full | cycle | region | ambito",
+                  "type": "string"
+                },
+                "format": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "download_urls": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                },
+                "landing_page": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                },
+                "notes": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "entity",
+                "scope",
+                "download_urls"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "type": "object",
+        "x-fastmcp-wrap-result": true
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "opencoesione_describe_dataset",
+      "description": "Fetch full metadata for one OpenCoesione dataset by its id.\n\nUse opencoesione_list_datasets to discover valid ids (e.g. 'progetti_esteso',\n'progetti_esteso_2021-2027', 'progetti_esteso_lom').\nRaises an error if the id is not found in the curated catalog.",
+      "inputSchema": {
+        "properties": {
+          "dataset_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dataset_id"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "entity": {
+            "description": "progetti | soggetti | pagamenti | localizzazioni | beneficiari",
+            "type": "string"
+          },
+          "scope": {
+            "description": "full | cycle | region | ambito",
+            "type": "string"
+          },
+          "format": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "download_urls": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "landing_page": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "entity",
+          "scope",
+          "download_urls"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "opencoesione_download_parquet",
+      "description": "Return the Parquet download URL for an OpenCoesione dataset.\n\nNot all datasets have a Parquet format; regional datasets are ZIP-only.\nRaises an error if the dataset has no Parquet URL or is not found.",
+      "inputSchema": {
+        "properties": {
+          "dataset_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dataset_id"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "opencoesione_search_projects",
+      "description": "Query OpenCoesione cohesion projects and get totals + top beneficiaries.\n\nDownloads the cycle's project Parquet bulk once (cached), then returns:\nnumber of projects, totale finanziato / impegnato / pagato, top-5\nbeneficiaries by financing, and a sample of the largest matching projects.\n\nArgs:\n    cycle: '2007-2013' | '2014-2020' | '2021-2027' (default latest).\n    region: region name, e.g. 'Friuli' (matched on DEN_REGIONE).\n    fund: community fund, e.g. 'FESR', 'FSE' (matched on FONDO_COMUNITARIO).\n    cup: exact CUP filter.\n    query: free-text on project title.\n    limit: sample size (default 20).",
+      "inputSchema": {
+        "properties": {
+          "cycle": {
+            "default": "2021-2027",
+            "type": "string"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "fund": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "cup": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "limit": {
+            "default": 20,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "opencoesione_project_by_cup",
+      "description": "Find one OpenCoesione project by CUP (scans all cycles).\n\nReturns title, region, fund, beneficiary, and financed/committed/paid\namounts, plus procedural/financial status. Use to check whether a CUP\nis present on OpenCoesione and reconcile its amounts against ANAC/PNRR.",
+      "inputSchema": {
+        "properties": {
+          "cup": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cup"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "opencoesione_project_url",
+      "description": "Stable detail-page URL for a project, identified by CUP.\n\nEvery Italian cohesion-funded project has a CUP (Codice Unico di\nProgetto) and a permalink at\nopencoesione.gov.it/{lang}/progetti/{cup}.",
+      "inputSchema": {
+        "properties": {
+          "cup": {
+            "type": "string"
+          },
+          "lang": {
+            "default": "it",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cup"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "opencoesione_search_url",
+      "description": "Build a deep-link search URL for the public OpenCoesione frontend.\n\nUse when the user wants to browse projects matching free-text criteria\nwithout downloading the whole dataset.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "default": "",
+            "type": "string"
+          },
+          "cycle": {
+            "anyOf": [
+              {
+                "enum": [
+                  "2007-2013",
+                  "2014-2020",
+                  "2021-2027"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "theme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "italiadomani_catalog",
+      "description": "Try to extract downloadable PNRR datasets from ItaliaDomani's catalog.\n\nThe official catalog is loaded by a JavaScript component sitting\nbehind Akamai, so a server-side fetch often returns 0 items. When\nthat happens, use `italiadomani_via_dati_gov_it` (programmatic\nalternative) or send the user to the landing page.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "italiadomani_landing",
+      "description": "Return a stable landing-page URL for a major ItaliaDomani section.\n\nValid `section` values: missioni, investimenti, riforme,\nmilestone_target, indicatori_comuni_europei, regis, dnsh,\nbandi_titolari, bandi_attuatori, andamento_piano, documenti.",
+      "inputSchema": {
+        "properties": {
+          "section": {
+            "default": "missioni",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "italiadomani_via_dati_gov_it",
+      "description": "Build a dati.gov.it search URL filtered to ItaliaDomani / PNRR datasets.\n\ndati.gov.it harvests ItaliaDomani's open data and exposes it via\nCKAN — much more reliable than scraping the AEM frontend.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "openpnrr_endpoints",
+      "description": "List OpenPNRR REST endpoints (missioni, misure, scadenze, progetti, …).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "openpnrr_list",
+      "description": "List items from one OpenPNRR endpoint with cursor pagination.\n\nValid endpoints: missioni, componenti, misure, scadenze, organizzazioni,\nterritori, temi, priorita, progetti.",
+      "inputSchema": {
+        "properties": {
+          "endpoint": {
+            "enum": [
+              "missioni",
+              "componenti",
+              "misure",
+              "scadenze",
+              "organizzazioni",
+              "territori",
+              "temi",
+              "priorita",
+              "progetti"
+            ],
+            "type": "string"
+          },
+          "limit": {
+            "default": 25,
+            "type": "integer"
+          },
+          "page": {
+            "default": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "endpoint"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "description": "Paginated list response.",
+        "properties": {
+          "source": {
+            "description": "Source slug, e.g. 'anac', 'ted'.",
+            "type": "string"
+          },
+          "count": {
+            "description": "Number of items returned in this page.",
+            "type": "integer"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Total matching items if the source reports it."
+          },
+          "offset": {
+            "default": 0,
+            "description": "0-based offset of the first returned item.",
+            "type": "integer"
+          },
+          "next_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Offset to pass back for the next page, or null at end."
+          },
+          "items": {
+            "description": "The actual items; shape depends on the source.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional human-readable note about the result (truncation, etc.)."
+          }
+        },
+        "required": [
+          "source",
+          "count",
+          "items"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "openpnrr_get",
+      "description": "Fetch full detail for one OpenPNRR item by id.",
+      "inputSchema": {
+        "properties": {
+          "endpoint": {
+            "enum": [
+              "missioni",
+              "componenti",
+              "misure",
+              "scadenze",
+              "organizzazioni",
+              "territori",
+              "temi",
+              "priorita",
+              "progetti"
+            ],
+            "type": "string"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "required": [
+          "endpoint",
+          "item_id"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "openpnrr_search_progetti",
+      "description": "Search PNRR-tracked projects on OpenPNRR.\n\nArgs:\n    cup: a CUP to resolve. NOTE: OpenPNRR's API has no server-side CUP\n        filter, so this is a bounded client-side scan. If the CUP is not\n        found, the response sets cup_filter_supported=false — do NOT\n        retry; use anac_awards_by_cup / opencoesione_project_by_cup\n        instead to resolve a CUP.\n    query: free-text query (matches project title/description).\n    limit: page size for free-text/listing (default 25).\n    page: 1-based page number (free-text/listing only).",
+      "inputSchema": {
+        "properties": {
+          "cup": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "limit": {
+            "default": 25,
+            "type": "integer"
+          },
+          "page": {
+            "default": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "consip_search_bandi",
+      "description": "Search Consip tender notices (scrapes /imprese/bandi).\n\nArgs:\n    query: free-text search across notice title/summary.\n    stage: optional gating stage. One of: annunci, bando, chiarimenti,\n        aggiudicata, ricorso, sospesa, revocata.\n    page: 0-based page number (Drupal-style).",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "default": "",
+            "type": "string"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "page": {
+            "default": 0,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "consip_search_consultazioni",
+      "description": "Search Consip consultazioni di mercato (market consultations).\n\nScrapes the /imprese/informazioni-operative/consultazioni-di-mercato page.\nThese are exploratory market soundings, distinct from formal bandi.\nReturns an empty list (not an error) if the page layout does not match\nthe expected card selectors.\n\nArgs:\n    query: free-text search term (e.g. \"cloud\", \"cybersecurity\").",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "default": "",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "marche_list_datasets",
+      "description": "List CCIAA Marche open-data datasets (parsed from the RSS feed).\n\nNote: despite the name, these datasets cover **all Italian provinces**\n(the CCIAA delle Marche publishes them on behalf of the Italian\nChambers-of-Commerce system, using InfoCamere data).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "marche_fetch_jsonstat",
+      "description": "Download a JSON-stat dataset hosted at opendata.marche.camcom.it/data/.\n\nUse after `marche_list_datasets` to retrieve the actual statistics.\nOutput is the raw JSON-stat object — parse with the json-stat\nlibrary on the client side.",
+      "inputSchema": {
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "mef_taxpayer_scopes",
+      "description": "Return the MEF taxpayer-scope codes (search_contrib values).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "mef_classifications",
+      "description": "Return the breakdown variables (search_class) available on MEF stats.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "mef_search_link",
+      "description": "Build a deep-link to MEF fiscal statistics.\n\nArgs:\n    contrib: taxpayer scope code (default IMPRE — corporate / businesses).\n        Valid: see mef_taxpayer_scopes.\n    classification: breakdown variable (see mef_classifications).\n    tree: high-level grouping letter (A, B, C, D, BB).\n    page: 1-based page number.\n\nReturns a URL that loads the matching HTML statistics table with\nCSV/XLSX export buttons.",
+      "inputSchema": {
+        "properties": {
+          "contrib": {
+            "default": "IMPRE",
+            "type": "string"
+          },
+          "classification": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "tree": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "source": {
+            "default": "mef",
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "url",
+          "description",
+          "parameters"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "env_va_search_link",
+      "description": "Build a deep-link URL to search the national VAS-VIA-AIA portal (MASE).\n\nArgs:\n    procedure_type: VIA | VAS | AIA | Verifica\n    region: Italian region name (e.g. 'Lazio')\n    year: 4-digit year\n    proponent: name of the proponent organisation",
+      "inputSchema": {
+        "properties": {
+          "procedure_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "proponent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "source": {
+            "default": "environment",
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "scope",
+          "url"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "env_er_search_link",
+      "description": "Build a deep-link URL to search Emilia-Romagna's VIA-VAS portal.",
+      "inputSchema": {
+        "properties": {
+          "procedure_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "proponent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "source": {
+            "default": "environment",
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "scope",
+          "url"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "env_regional_search_link",
+      "description": "Build a deep-link URL for a regional Italian VIA/VAS portal.\n\nCovers: Veneto, Lombardia, Piemonte, Lazio.\nFor Emilia-Romagna use env_er_search_link. For national use env_va_search_link.\n\nArgs:\n    region: Italian region name (case-insensitive).\n    procedure_type: VIA | VAS | AIA | Verifica\n    proponent: name of the proponent organisation",
+      "inputSchema": {
+        "properties": {
+          "region": {
+            "type": "string"
+          },
+          "procedure_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "proponent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "region"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "source": {
+            "default": "environment",
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "scope",
+          "url"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "env_probe_va",
+      "description": "Probe whether the national VAS-VIA-AIA search is currently enabled.\n\nThe ministry has periodically disabled programmatic search for\nsecurity reviews. Use this before recommending the search link.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "programmazione_search_biennale",
+      "description": "Search the curated registry of Italian regional biennale/triennale planning datasets.\n\nReturns entries from the in-memory registry — no HTTP call.\nEach entry contains a download URL pointing to the institutional portal where\nthe planning document is published.\n\nArgs:\n    cpv: CPV code prefix to filter by (e.g. '71000000' for engineering services).\n         NOTE: CPV filtering is advisory — the registry does not store lot-level CPV\n         data; the returned URLs must be inspected to confirm CPV coverage.\n    regione: Italian region name (e.g. 'Puglia', 'Lombardia') to filter by.\n    anno: Planning cycle start year (e.g. 2024, 2025) to filter by.",
+      "inputSchema": {
+        "properties": {
+          "cpv": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "regione": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "anno": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "description": "Paginated list response.",
+        "properties": {
+          "source": {
+            "description": "Source slug, e.g. 'anac', 'ted'.",
+            "type": "string"
+          },
+          "count": {
+            "description": "Number of items returned in this page.",
+            "type": "integer"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Total matching items if the source reports it."
+          },
+          "offset": {
+            "default": 0,
+            "description": "0-based offset of the first returned item.",
+            "type": "integer"
+          },
+          "next_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Offset to pass back for the next page, or null at end."
+          },
+          "items": {
+            "description": "The actual items; shape depends on the source.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Optional human-readable note about the result (truncation, etc.)."
+          }
+        },
+        "required": [
+          "source",
+          "count",
+          "items"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "imprese_search_link",
+      "description": "Build a Ricerca Imprese deep-link to the public Registro Imprese search.\n\nThe InfoCamere site does not expose a free programmatic API; this tool\nconstructs the search-page URL so a human can complete the lookup.\nFor full programmatic access, a Telemaco subscription is required.",
+      "inputSchema": {
+        "properties": {
+          "denominazione": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "codice_fiscale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "rea": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "provincia": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "source": {
+            "default": "registro_imprese",
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "note"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "imprese_check_vat",
+      "description": "Validate a VAT number with the EU VIES service.\n\nFree, no auth. Returns is_valid plus registered name/address when\navailable. Works for any EU member-state (IT for Italian companies).\n\nExamples:\n    imprese_check_vat(\"IT\", \"00811720158\")\n    imprese_check_vat(\"DE\", \"123456789\")",
+      "inputSchema": {
+        "properties": {
+          "country": {
+            "type": "string"
+          },
+          "vat_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "country",
+          "vat_number"
+        ],
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "source": {
+            "default": "vies",
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "vat_number": {
+            "type": "string"
+          },
+          "is_valid": {
+            "type": "boolean"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "request_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "raw": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "country",
+          "vat_number",
+          "is_valid"
+        ],
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    },
+    {
+      "name": "imprese_telemaco_status",
+      "description": "Report whether Telemaco (paid InfoCamere API) credentials are configured.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "_meta": {
+        "_fastmcp": {
+          "tags": []
+        }
+      }
+    }
+  ]
+}

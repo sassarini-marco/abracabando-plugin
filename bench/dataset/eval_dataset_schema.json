@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://tinextainnovationhub.com/schemas/eval_dataset/1.0.0",
+  "$id": "https://tinextainnovationhub.com/schemas/eval_dataset/2.0.0",
   "title": "Industrial Procurement Evaluation Dataset",
   "description": "Schema for evaluation datasets used in the industrial-procurement-plugin benchmark suite.",
   "type": "object",
@@ -87,6 +87,9 @@
       "type": "object",
       "required": [
         "id",
+        "skill",
+        "scenario",
+        "tier",
         "template",
         "prompt",
         "parameters",
@@ -99,6 +102,32 @@
       ],
       "additionalProperties": true,
       "properties": {
+        "skill": {
+          "type": "string",
+          "enum": [
+            "pin-radar",
+            "consultazioni-radar",
+            "scheda-opportunita",
+            "digest-pregara",
+            "profilo-sa",
+            "reconciliation-pnrr"
+          ],
+          "description": "Primary key: the skill slug this case exercises."
+        },
+        "scenario": {
+          "type": "string",
+          "enum": ["happy-path", "missing-data", "edge"],
+          "description": "Coverage scenario for the skill."
+        },
+        "tier": {
+          "type": "string",
+          "enum": ["frozen", "live"],
+          "description": "frozen = deterministic replay gate; live = scheduled live-data tier."
+        },
+        "empty_reason": {
+          "type": ["string", "null"],
+          "description": "Why ground_truth_records is empty (missing-data / pending-capture cases)."
+        },
         "transformation_score_label": {
           "type": "string",
           "enum": ["basso", "medio", "alto"],
@@ -116,8 +145,8 @@
         },
         "template": {
           "type": "string",
-          "enum": ["3.1", "3.2", "3.3"],
-          "description": "Prompt template identifier."
+          "enum": ["3.1", "3.2", "3.3", "3.4", "3.5", "3.6"],
+          "description": "Prompt template identifier (one per skill)."
         },
         "prompt": {
           "type": "string",

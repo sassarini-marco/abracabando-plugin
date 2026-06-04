@@ -21,3 +21,8 @@ bench/results/_*.log
 
 # Eval harness run outputs (transient -- do not commit)
 bench/eval_results/
+
+# Frozen replay fixtures MUST be committed (they are the deterministic gate's
+# recorded data). Un-ignore them explicitly in case a broader rule ever matches.
+!bench/fixtures/
+!bench/fixtures/**

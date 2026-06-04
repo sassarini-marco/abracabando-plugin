@@ -1,0 +1,14 @@
+# Dev / CI dependencies for the industrial-procurement-plugin eval harness.
+# Every CI tier (eval-static / eval-model / eval-live) runs
+#   pip install -r requirements-dev.txt
+# before invoking pytest or the eval runner.
+#
+# NOTE: the live tier additionally needs the `industrial-mcp` server on PATH,
+# which is NOT a pip package — install it separately with:
+#   uv tool install industrial-mcp
+
+anthropic>=0.40        # Batch API judge step (eval_runner.py)
+jsonschema>=4          # dataset schema validation (tests + runner)
+pyyaml>=6              # parsing .github/workflows/*.yml in bench/test_ci_workflows.py
+pytest>=8              # test runner
+ruff>=0.6              # lint (ruff.toml)

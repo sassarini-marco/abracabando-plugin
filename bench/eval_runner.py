@@ -21,15 +21,33 @@ import time
 from datetime import date
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "ground-truth"))
+
+from mcp_preflight import attribute_layer, extract_records, record_identity  # noqa: E402
+from output_rules import run_all_rules  # noqa: E402
+
 BENCH = Path(__file__).resolve().parent
 PLUGIN = BENCH.parent
 EVAL_RESULTS = BENCH / "eval_results"
+GOLDEN_DIR = BENCH / "ground-truth" / "golden"
+
+# Pin to a full model version string (no alias) so frozen runs are reproducible;
+# there is no --temperature flag, so tolerant scoring + a pinned version is the
+# best we can do for determinism.
+DEFAULT_MODEL = "claude-sonnet-4-6"
 
 TEMPLATE_TO_SKILL: dict[str, str] = {
     "3.1": "pin-radar",
     "3.2": "consultazioni-radar",
     "3.3": "scheda-opportunita",
+    "3.4": "digest-pregara",
+    "3.5": "profilo-sa",
+    "3.6": "reconciliation-pnrr",
 }
+
+# Layers that do NOT count as a failure for the hard gate.
+PASSING_LAYERS = {"skill_ok", "skill_ok_no_data"}
 
 JUDGE_SCHEMA = {
     "type": "object",
@@ -57,7 +75,7 @@ JUDGE_SCHEMA = {
 
 
 
-def check_d2_recall(answer: str, ground_truth_records: list[dict]) -> float:
+def check_d2_recall(answer: str, ground_truth_records: list[dict]) -> float | None:
     """Return fraction of expected record IDs found in the rendered answer.
 
     Matching is per-source:
@@ -67,11 +85,12 @@ def check_d2_recall(answer: str, ground_truth_records: list[dict]) -> float:
                 looks like a real CIG, matches exactly; otherwise any CIG counts
       - other:  case-insensitive substring match
 
-    Returns 1.0 when there are no expected IDs (vacuously correct).
+    Returns None when there are no expected IDs (vacuous — D2 does not apply,
+    e.g. a correct missing-data case). Callers treat None as "not a failure".
     """
     expected = [r for r in ground_truth_records if r.get("record_id")]
     if not expected:
-        return 1.0
+        return None
 
     ted_found = set(re.findall(r"\d{6}-\d{4}", answer))
     cig_found = set(re.findall(r"\b[A-Z0-9]{10}\b", answer))
@@ -125,16 +144,98 @@ def check_staleness(cases: list) -> list[dict]:
 
 
 
-def run_case(case: dict, plugin_dir: Path, mcp_config: Path, timeout: int = 900, model: str = "sonnet") -> str:
-    """Run a single eval case through Claude Code.
+class PluginLoadError(RuntimeError):
+    """The headless run reported plugin_errors — a silently degraded run."""
 
-    Returns the markdown answer text emitted by the skill.
+
+def _scan_plugin_errors(raw: str) -> list:
+    """Return the plugin_errors array from the stream-json system/init event."""
+    for line in raw.splitlines():
+        try:
+            o = json.loads(line)
+        except (ValueError, TypeError):
+            continue
+        if o.get("type") in ("system", "init") and o.get("plugin_errors"):
+            return o["plugin_errors"]
+    return []
+
+
+MCP_TOOL_PREFIX = "mcp__industrial-mcp-free__"
+
+
+def parse_stream(raw: str) -> dict:
+    """Parse a stream-json transcript into answer text + the actual MCP traffic.
+
+    Returns ``{"answer", "mcp_records", "mcp_tools", "mcp_calls"}`` where
+    ``mcp_records`` are the records the MCP server actually returned across the
+    run (normalised), ``mcp_tools`` is the set of MCP tool short-names called,
+    and ``mcp_calls`` is the raw call count. This is what lets the live tier
+    attribute a failure to the skill vs the MCP layer.
+    """
+    answer = None
+    tooluse_name: dict[str, str] = {}
+    mcp_records: list[dict] = []
+    mcp_tools: set[str] = set()
+    mcp_calls = 0
+
+    for line in raw.splitlines():
+        try:
+            o = json.loads(line)
+        except (ValueError, TypeError):
+            continue
+        typ = o.get("type")
+        if typ == "result":
+            answer = o.get("result")
+        elif typ == "assistant":
+            for b in (o.get("message") or {}).get("content", []):
+                if isinstance(b, dict) and b.get("type") == "tool_use":
+                    name = b.get("name", "")
+                    if name.startswith(MCP_TOOL_PREFIX):
+                        tooluse_name[b.get("id")] = name
+        elif typ == "user":
+            for b in (o.get("message") or {}).get("content", []):
+                if not isinstance(b, dict) or b.get("type") != "tool_result":
+                    continue
+                name = tooluse_name.get(b.get("tool_use_id"))
+                if not name:
+                    continue
+                mcp_calls += 1
+                mcp_tools.add(name[len(MCP_TOOL_PREFIX):])
+                content = b.get("content")
+                payload = content
+                if isinstance(content, list):
+                    payload = {"content": content}
+                elif isinstance(content, str):
+                    try:
+                        payload = json.loads(content)
+                    except ValueError:
+                        payload = {"content": [{"type": "text", "text": content}]}
+                mcp_records.extend(extract_records(payload))
+
+    return {
+        "answer": answer or "",
+        "mcp_records": mcp_records,
+        "mcp_tools": sorted(mcp_tools),
+        "mcp_calls": mcp_calls,
+    }
+
+
+def run_case_detailed(
+    case: dict,
+    plugin_dir: Path,
+    mcp_config: Path,
+    timeout: int = 900,
+    model: str = DEFAULT_MODEL,
+) -> dict:
+    """Run a case headlessly and return the parsed stream (answer + MCP traffic).
+
+    Raises ``PluginLoadError`` if the run reported plugin_errors.
     """
     cmd = [
         "claude", "-p", case["prompt"],
         "--plugin-dir", ".",
         "--model", model,
-        "--mcp-config", "bench/mcp.json", "--strict-mcp-config",
+        "--mcp-config", str(mcp_config), "--strict-mcp-config",
         "--allowedTools", "mcp__industrial-mcp-free__*",
         "--disallowedTools", "Bash",
         "--output-format", "stream-json", "--verbose",
@@ -149,20 +250,101 @@ def run_case(case: dict, plugin_dir: Path, mcp_config: Path, timeout: int = 900,
         raw = e.stdout.decode() if isinstance(e.stdout, bytes) else (e.stdout or "")
         timed_out = True
 
-    result_text = None
-    for line in raw.splitlines():
-        try:
-            o = json.loads(line)
-        except Exception:
-            continue
-        if o.get("type") == "result":
-            result_text = o.get("result")
-            break
+    errors = _scan_plugin_errors(raw)
+    if errors:
+        raise PluginLoadError(f"plugin_errors for {case.get('id')}: {errors}")
 
+    parsed = parse_stream(raw)
+    parsed["timed_out"] = timed_out
     if timed_out:
-        return f"[TIMEOUT after {timeout}s] {result_text or ''}"
+        parsed["answer"] = f"[TIMEOUT after {timeout}s] {parsed['answer']}"
+    return parsed
 
-    return result_text or ""
+
+def run_case(
+    case: dict,
+    plugin_dir: Path,
+    mcp_config: Path,
+    timeout: int = 900,
+    model: str = DEFAULT_MODEL,
+) -> str:
+    """Backward-compatible wrapper: returns just the answer text."""
+    return run_case_detailed(case, plugin_dir, mcp_config, timeout, model)["answer"]
+
+
+def load_golden_records(case_id: str) -> list[dict]:
+    """Load the independent golden records for a case (empty if none)."""
+    path = GOLDEN_DIR / case_id / "golden.json"
+    if not path.exists():
+        return []
+    return json.loads(path.read_text()).get("records") or []
+
+
+def _render_fidelity(answer: str, mcp_records: list[dict]) -> float | None:
+    """Of the records the MCP actually returned, what fraction did the skill
+    surface (by record id) in its answer? None when the MCP returned nothing.
+
+    This is the clean skill-vs-MCP signal: low MCP count -> MCP/query gap; high
+    MCP count but low fidelity -> the skill dropped data it was handed."""
+    ids = {rid for r in mcp_records if (rid := record_identity(r))}
+    if not ids:
+        return None
+    hit = sum(1 for rid in ids if rid in answer)
+    return hit / len(ids)
+
+
+def score_case_deterministic(
+    case: dict,
+    answer: str,
+    golden_records: list[dict],
+    mcp_records: list[dict] | None = None,
+    reference_date: str | None = None,
+    mcp_tools: list[str] | None = None,
+    mcp_calls: int | None = None,
+) -> dict:
+    """Score the deterministic dimensions for one case — no API key required.
+
+    Runs the output-rule linter (the output contract), D2 recall, D4 freshness,
+    and golden-backed layer attribution. When ``mcp_records`` are the records the
+    live MCP actually returned, attribution can separate skill bugs from MCP
+    gaps. When omitted it falls back to the golden (frozen replay). No judge
+    dimensions are computed here.
+    """
+    used_real_mcp = mcp_records is not None
+    if mcp_records is None:
+        mcp_records = golden_records
+    ref = reference_date or date.today().isoformat()
+
+    gt_records = case.get("ground_truth_records", [])
+    d2 = check_d2_recall(answer, gt_records)
+    d4 = check_d4_freshness(answer, ref)
+    rules = run_all_rules(answer, gt_records)
+    rules_map = {r.rule_id: r.passed for r in rules}
+    layer = attribute_layer(answer, mcp_records, golden_records)
+
+    d2_ok = d2 is None or d2 == 1.0
+    overall = bool(d4) and d2_ok and all(rules_map.values()) and layer in PASSING_LAYERS
+
+    result = {
+        "id": case["id"],
+        "skill": case.get("skill"),
+        "scenario": case.get("scenario"),
+        "tier": case.get("tier"),
+        "template": case.get("template"),
+        "d2_recall": d2,
+        "d4_freshness": d4,
+        "output_rules": rules_map,
+        "output_rules_detail": {r.rule_id: r.detail for r in rules},
+        "layer": layer,
+        "overall_pass": overall,
+        "answer": answer,
+    }
+    if used_real_mcp:
+        result["mcp_record_count"] = len(mcp_records)
+        result["mcp_tools_called"] = mcp_tools or []
+        result["mcp_calls"] = mcp_calls if mcp_calls is not None else None
+        result["render_fidelity"] = _render_fidelity(answer, mcp_records)
+    return result
 
 
 def build_judge_request(case: dict, answer: str, judge_prompt: str) -> dict:
@@ -238,12 +420,28 @@ def print_staleness_table(rows: list[dict]) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(
-        description="Evaluation harness for segnale-azionabile templates 3.1, 3.2, 3.3."
+        description="Evaluation harness for the industrial-procurement skills (6 skills)."
     )
     ap.add_argument(
         "--template",
-        choices=["3.1", "3.2", "3.3"],
+        choices=["3.1", "3.2", "3.3", "3.4", "3.5", "3.6"],
         help="Run only cases for this template.",
+    )
+    ap.add_argument(
+        "--skill",
+        choices=sorted(set(TEMPLATE_TO_SKILL.values())),
+        help="Run only cases for this skill slug.",
+    )
+    tier = ap.add_mutually_exclusive_group()
+    tier.add_argument(
+        "--frozen", action="store_true",
+        help="Frozen tier (default): replay fixtures via bench/mcp_replay.json, "
+             "deterministic scoring, no API key required.",
+    )
+    tier.add_argument(
+        "--live", action="store_true",
+        help="Live tier: real bench/mcp.json + non-empty preflight; surfaces "
+             "MCP-layer attributions for ../industrial-data-mcp.",
     )
     ap.add_argument(
         "--check-staleness",
@@ -252,8 +450,8 @@ def main() -> None:
     )
     ap.add_argument(
         "--model",
-        default="sonnet",
-        help="Model to use for eval runs (default: sonnet). Overrides skill frontmatter.",
+        default=DEFAULT_MODEL,
+        help=f"Model to use for eval runs (default: {DEFAULT_MODEL}). Pin a full version string.",
     )
     ap.add_argument(
         "--delay",
@@ -261,13 +459,28 @@ def main() -> None:
         default=10,
         help="Seconds to wait between cases (default: 10). Use to avoid rate limits.",
     )
+    ap.add_argument(
+        "--timeout",
+        type=int,
+        default=None,
+        help="Per-case timeout in seconds (default: 900 frozen / 1500 live).",
+    )
     args = ap.parse_args()
+
+    # Frozen is the default when neither flag is given.
+    live = args.live
+    mcp_config = (BENCH / "mcp.json") if live else (BENCH / "mcp_replay.json")
 
     dataset = json.loads((BENCH / "dataset" / "eval_dataset.json").read_text())
     cases = dataset["cases"]
 
     if args.template:
         cases = [c for c in cases if c["template"] == args.template]
+    if args.skill:
+        cases = [c for c in cases if c.get("skill") == args.skill]
+    if not live:
+        # The frozen tier only runs cases that have committed fixtures.
+        cases = [c for c in cases if c.get("tier", "frozen") == "frozen"]
 
     if args.check_staleness:
         rows = check_staleness(cases)
@@ -276,61 +489,73 @@ def main() -> None:
             sys.exit(1)
         return
 
-    # Try to import the Anthropic SDK for the judge step.
-    try:
-        import anthropic
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        if not api_key:
-            print(
-                "WARNING: ANTHROPIC_API_KEY not set — judge step (D1/D3/D5/D6/D7) "
-                "will be skipped. Only D2/D4 scores will be written.",
-                file=sys.stderr,
-            )
-            anthropic_client = None
-        else:
-            anthropic_client = anthropic.Anthropic(api_key=api_key)
-    except ImportError:
-        print(
-            "WARNING: 'anthropic' package not installed — judge step (D1/D3/D5/D6/D7) "
-            "will be skipped. Install with: pip install anthropic",
-            file=sys.stderr,
-        )
-        anthropic_client = None
+    # The judge runs only on the live/secret-gated path. The frozen tier scores
+    # deterministically and builds no judge request.
+    anthropic_client = None
+    if live:
+        try:
+            import anthropic
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            if api_key:
+                anthropic_client = anthropic.Anthropic(api_key=api_key)
+            else:
+                print("WARNING: ANTHROPIC_API_KEY not set — judge dims skipped.", file=sys.stderr)
+        except ImportError:
+            print("WARNING: 'anthropic' not installed — judge dims skipped.", file=sys.stderr)
 
     judge_prompt = (BENCH / "judge_prompt_v1.md").read_text()
 
-    EVAL_RESULTS.mkdir(exist_ok=True)
+    timeout = args.timeout if args.timeout is not None else (1500 if live else 900)
 
+    EVAL_RESULTS.mkdir(exist_ok=True)
     today_iso = date.today().isoformat()
 
-    # Collect answers and deterministic scores.
     answers: dict[str, str] = {}
     partial_results: dict[str, dict] = {}
 
-    print(f"Running {len(cases)} case(s)...\n")
+    print(f"Running {len(cases)} case(s) [{'live' if live else 'frozen'} tier, timeout {timeout}s]...\n")
     for i, case in enumerate(cases):
         cid = case["id"]
-        if i > 0 and args.delay > 0:
+        if i > 0 and args.delay > 0 and live:
             print(f"  [pause {args.delay}s between cases to avoid rate limit...]")
             time.sleep(args.delay)
         print(f"  [{cid}] Running via Claude Code...")
-        answer = run_case(case, PLUGIN, BENCH / "mcp.json", model=args.model)
+
+        golden_records = load_golden_records(cid)
+        os.environ["MCP_REPLAY_CASE"] = cid  # tell the replay server which fixture to load
+
+        try:
+            run = run_case_detailed(case, PLUGIN, mcp_config, timeout=timeout, model=args.model)
+        except PluginLoadError as exc:
+            print(f"  [{cid}] FAIL FAST: {exc}", file=sys.stderr)
+            sys.exit(2)
+        answer = run["answer"]
         answers[cid] = answer
 
-        d2 = check_d2_recall(answer, case["ground_truth_records"])
-        d4 = check_d4_freshness(answer, today_iso)
-
-        partial_results[cid] = {
-            "id": cid,
-            "template": case["template"],
-            "d2_recall": d2,
-            "d4_freshness": d4,
-            "answer": answer,
-        }
+        # On the live tier, attribute against the records the MCP actually
+        # returned (skill-vs-MCP). On frozen, fall back to the golden.
+        mcp_records = run["mcp_records"] if live else None
+        result = score_case_deterministic(
+            case, answer, golden_records,
+            mcp_records=mcp_records, reference_date=today_iso,
+            mcp_tools=run.get("mcp_tools"), mcp_calls=run.get("mcp_calls"),
+        )
+        result["timed_out"] = run.get("timed_out", False)
+        partial_results[cid] = result
+        d2 = result["d2_recall"]
         d2_str = "N/A" if d2 is None else f"{d2:.2f}"
-        print(f"         D2 recall={d2_str}  D4 freshness={d4}")
+        extra = ""
+        if live:
+            rf = result.get("render_fidelity")
+            rf_str = "N/A" if rf is None else f"{rf:.2f}"
+            extra = (f"  mcp_recs={result.get('mcp_record_count')} "
+                     f"tools={result.get('mcp_tools_called')} render={rf_str}")
+        print(
+            f"         D2={d2_str}  D4={result['d4_freshness']}  "
+            f"layer={result['layer']}  pass={result['overall_pass']}{extra}"
+        )
 
-    # Submit judge batch if SDK is available.
+    # Submit judge batch only on the live tier with an API key.
     if anthropic_client is not None:
         print("\nSubmitting judge batch...")
         requests = [

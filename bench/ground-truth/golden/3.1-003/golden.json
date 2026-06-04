@@ -1,0 +1,14 @@
+{
+  "case_id": "3.1-003",
+  "records": [
+    {
+      "source": "ted",
+      "record_id": "26125-2026",
+      "buyer": "ASL2 Lanciano Vasto Chieti",
+      "cpv": "72500000",
+      "status": "attivo",
+      "note": "Edge: singolo PIN al confine della finestra temporale"
+    }
+  ],
+  "empty_reason": null
+}

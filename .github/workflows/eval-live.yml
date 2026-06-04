@@ -1,0 +1,54 @@
+name: eval-live
+
+# Scheduled live-data tier. Runs the real model against the LIVE industrial-mcp
+# server to catch upstream data / MCP drift. Kept off the PR path so the merge
+# gate stays fast and deterministic. MCP-layer attributions
+# (mcp_layer_empty / mcp_layer_wrong) point maintainers at ../industrial-data-mcp.
+
+on:
+  schedule:
+    - cron: "0 4 1 * *"  # 04:00 UTC on the 1st of each month (ANAC is a monthly snapshot)
+  workflow_dispatch:
+
+jobs:
+  live-eval:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dev dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Install claude (pinned)
+        run: npm i -g @anthropic-ai/claude-code@2.1.161
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install the industrial-mcp server
+        run: uv tool install industrial-mcp
+
+      - name: Cache the MCP bulk data (~280MB, monthly key)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/industrial-mcp
+          key: industrial-mcp-cache-${{ github.run_id }}
+          restore-keys: |
+            industrial-mcp-cache-
+
+      - name: MCP non-empty preflight (fail the run if the MCP returns empty)
+        run: python3 bench/eval_runner.py --live --check-staleness
+
+      - name: Run live eval
+        run: python3 bench/eval_runner.py --live --model claude-sonnet-4-6
+
+      - name: Report (live attributions surface MCP-layer drift)
+        run: python3 bench/eval_report.py

@@ -2,6 +2,13 @@
 
 Queste regole si applicano a tutte le skill del plugin:
 
+- **Il documento markdown si apre con la riga `Dati letti il YYYY-MM-DD`.**
+  Evita preamboli e meta-commenti (es. «Ho tutti i dati», «Produco il report»):
+  vai dritto al documento. È tollerata al massimo una breve frase introduttiva,
+  ma l'intestazione `Dati letti il` deve comparire entro le prime righe.
+  Se manca un parametro obbligatorio o i dati non sono disponibili, NON chiedere
+  conferma: emetti comunque il documento a partire da `Dati letti il`, con la
+  sezione `## Dati non disponibili` che spiega cosa manca.
 - Scrivi **solo** sulla base dei dati restituiti dagli strumenti.
 - Non inventare dati, importi, URL, scadenze, nomi di enti o fornitori.
 - Se un dato non è disponibile nei risultati restituiti, dichiaralo esplicitamente nella sezione `## Dati non disponibili`.

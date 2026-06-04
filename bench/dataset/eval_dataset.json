@@ -1,32 +1,38 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "judge_prompt_version": "haiku-2025-10-v1",
   "cases": [
     {
       "id": "3.1-001",
+      "skill": "pin-radar",
+      "scenario": "happy-path",
+      "tier": "frozen",
       "template": "3.1",
       "prompt": "/pin-radar Trova PIN TED attivi per servizi informatici (CPV 72000000), probabili gare entro 6 mesi, Italia.",
       "parameters": {
         "categoria": "servizi informatici",
         "cpv": "72000000"
       },
-      "snapshot_date": "2026-06-02",
-      "frozen_date": "2026-06-02",
+      "snapshot_date": "2026-06-04",
+      "frozen_date": "2026-06-04",
       "ttl_days": 90,
       "ground_truth_records": [
         {
           "source": "ted",
-          "record_id": "338240-2026",
-          "status_at_snapshot": "attivo",
-          "note": "PIN Azienda Zero Padova, CPV 72253000, pubblicato 2026-05-18"
+          "record_id": "297071-2024",
+          "buyer": "Comune di Lecce",
+          "cpv": "72514100",
+          "status": "attivo"
         },
         {
           "source": "ted",
-          "record_id": "340106-2026",
-          "status_at_snapshot": "attivo",
-          "note": "PIN CSI PIEMONTE, CPV 72210000, pubblicato 2026-05-19"
+          "record_id": "440309-2024",
+          "buyer": "Commissione Nazionale per Le Società e La Borsa",
+          "cpv": "72500000",
+          "status": "attivo"
         }
       ],
+      "empty_reason": null,
       "rubrics": {
         "D1": "judge",
         "D2": "deterministic",
@@ -36,15 +42,46 @@
         "D6": "judge",
         "D7": "judge"
       },
-      "refresh_instructions": "Ri-eseguire `python3 bench/ground-truth/label_ted_pins.py --cpv 72 --limit 20` per aggiornare la lista di PIN attivi. Aggiornare ground_truth_records con i nuovi publication_number e snapshot_date/frozen_date."
+      "refresh_instructions": "Ri-eseguire `python3 bench/ground-truth/label_ted_pins.py --cpv 72 --limit 20`, poi `capture_golden.py --case 3.1-001` e `generate_ground_truth.py --case 3.1-001`."
     },
     {
       "id": "3.1-002",
+      "skill": "pin-radar",
+      "scenario": "missing-data",
+      "tier": "frozen",
       "template": "3.1",
-      "prompt": "/pin-radar Trova PIN TED attivi per software di gestione (CPV 72500000), probabili gare entro 6 mesi, Italia.",
+      "prompt": "/pin-radar Trova PIN TED attivi per fornitura di acqua potabile (CPV 65111000), probabili gare entro 6 mesi, Italia.",
+      "parameters": {
+        "categoria": "acqua potabile",
+        "cpv": "65111000"
+      },
+      "snapshot_date": "2026-06-02",
+      "frozen_date": "2026-06-02",
+      "ttl_days": 90,
+      "ground_truth_records": [],
+      "empty_reason": "Nessun PIN TED attivo per CPV 65111000 (fornitura acqua potabile) nella finestra di 6 mesi — scenario missing-data.",
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "Scenario missing-data: confermare che TED non restituisca PIN attivi per il CPV indicato; rigenerare golden vuoto."
+    },
+    {
+      "id": "3.1-003",
+      "skill": "pin-radar",
+      "scenario": "edge",
+      "tier": "frozen",
+      "template": "3.1",
+      "prompt": "/pin-radar Trova PIN TED attivi per software di gestione (CPV 72500000) pubblicati negli ultimi 7 giorni, Italia.",
       "parameters": {
         "categoria": "software di gestione",
-        "cpv": "72500000"
+        "cpv": "72500000",
+        "finestra_giorni": 7
       },
       "snapshot_date": "2026-06-02",
       "frozen_date": "2026-06-02",
@@ -53,10 +90,13 @@
         {
           "source": "ted",
           "record_id": "26125-2026",
-          "status_at_snapshot": "attivo",
-          "note": "PIN ASL2 Lanciano Vasto Chieti, CPV 72500000, pubblicato 2026-01-14"
+          "buyer": "ASL2 Lanciano Vasto Chieti",
+          "cpv": "72500000",
+          "status": "attivo",
+          "note": "Edge: singolo PIN al confine della finestra temporale"
         }
       ],
+      "empty_reason": null,
       "rubrics": {
         "D1": "judge",
         "D2": "deterministic",
@@ -66,12 +106,15 @@
         "D6": "judge",
         "D7": "judge"
       },
-      "refresh_instructions": "Ri-eseguire `python3 bench/ground-truth/label_ted_pins.py --cpv 72 --limit 20` per aggiornare la lista di PIN attivi."
+      "refresh_instructions": "Edge: finestra temporale stretta; ri-catturare golden con capture_golden.py --case 3.1-003."
     },
     {
       "id": "3.2-001",
+      "skill": "consultazioni-radar",
+      "scenario": "happy-path",
+      "tier": "frozen",
       "template": "3.2",
-      "prompt": "/consultazioni-radar Trova consultazioni Consip/avvisi esplorativi ancora aperti su servizi cloud (tecnologia: cloud computing, IaaS/PaaS).",
+      "prompt": "/consultazioni-radar Trova consultazioni Consip/avvisi esplorativi ancora aperti su servizi cloud (IaaS/PaaS).",
       "parameters": {
         "settore": "servizi cloud",
         "tecnologia": "cloud computing"
@@ -83,16 +126,17 @@
         {
           "source": "consip",
           "record_id": "rda-52841",
-          "status_at_snapshot": "aperto",
-          "note": "RdA 52841 — Public Cloud IaaS e PaaS 2 AWS, verificato run 2026-06-02"
+          "status": "aperto",
+          "note": "RdA 52841 — Public Cloud IaaS e PaaS 2 AWS"
         },
         {
           "source": "consip",
           "record_id": "rda-51125",
-          "status_at_snapshot": "aperto",
-          "note": "RdA 51125 — Public Cloud IaaS e PaaS, verificato run 2026-06-02"
+          "status": "aperto",
+          "note": "RdA 51125 — Public Cloud IaaS e PaaS"
         }
       ],
+      "empty_reason": null,
       "rubrics": {
         "D1": "judge",
         "D2": "deterministic",
@@ -102,12 +146,41 @@
         "D6": "judge",
         "D7": "judge"
       },
-      "refresh_instructions": "Verificare manualmente sul portale Acquisti in Rete PA / Consip le consultazioni e gli avvisi esplorativi ancora aperti per la categoria 'servizi cloud'. Aggiornare `record_id` con l'identificativo dell'iniziativa attiva e confermare `status_at_snapshot: aperto`."
+      "refresh_instructions": "Verificare su Acquisti in Rete PA le RdA/avvisi aperti; aggiornare golden 3.2-001."
     },
     {
       "id": "3.2-002",
+      "skill": "consultazioni-radar",
+      "scenario": "missing-data",
+      "tier": "frozen",
       "template": "3.2",
-      "prompt": "/consultazioni-radar Trova consultazioni Consip/avvisi esplorativi ancora aperti su licenze software (tecnologia: Adobe Creative Cloud).",
+      "prompt": "/consultazioni-radar Trova consultazioni Consip/avvisi esplorativi ancora aperti su servizi di brokeraggio assicurativo.",
+      "parameters": {
+        "settore": "brokeraggio assicurativo"
+      },
+      "snapshot_date": "2026-06-02",
+      "frozen_date": "2026-06-02",
+      "ttl_days": 60,
+      "ground_truth_records": [],
+      "empty_reason": "Nessuna consultazione/avviso esplorativo Consip aperto per la categoria richiesta — scenario missing-data.",
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "Scenario missing-data: confermare assenza di consultazioni aperte per la categoria."
+    },
+    {
+      "id": "3.2-003",
+      "skill": "consultazioni-radar",
+      "scenario": "edge",
+      "tier": "frozen",
+      "template": "3.2",
+      "prompt": "/consultazioni-radar Trova consultazioni Consip/avvisi esplorativi ancora aperti su licenze software Adobe Creative Cloud.",
       "parameters": {
         "settore": "licenze software",
         "tecnologia": "Adobe Creative Cloud"
@@ -119,16 +192,11 @@
         {
           "source": "consip",
           "record_id": "rda-52302",
-          "status_at_snapshot": "aperto",
-          "note": "RdA 52302 — Adobe Creative Cloud, verificato run 2026-06-02"
-        },
-        {
-          "source": "consip",
-          "record_id": "rda-52826",
-          "status_at_snapshot": "aperto",
-          "note": "RdA 52826 — Adobe Creative Cloud e Reader, verificato run 2026-06-02"
+          "status": "aperto",
+          "note": "Edge: singola RdA Adobe Creative Cloud al limite della categoria"
         }
       ],
+      "empty_reason": null,
       "rubrics": {
         "D1": "judge",
         "D2": "deterministic",
@@ -138,12 +206,15 @@
         "D6": "judge",
         "D7": "judge"
       },
-      "refresh_instructions": "Verificare su Consip bandi correnti per licenze software Adobe. Aggiornare record_id con l'identificativo del bando attivo."
+      "refresh_instructions": "Edge: categoria molto specifica; aggiornare golden 3.2-003."
     },
     {
       "id": "3.3-001",
+      "skill": "scheda-opportunita",
+      "scenario": "happy-path",
+      "tier": "frozen",
       "template": "3.3",
-      "prompt": "/scheda-opportunita Trova opportunità con PIN TED attivo + storico ANAC coerente per Azienda Zero Padova su servizi informatici (CPV 72), con score alto di trasformazione in gara.",
+      "prompt": "/scheda-opportunita Trova opportunità con PIN TED attivo + storico ANAC coerente per Azienda Zero su servizi informatici (CPV 72), con valutazione qualitativa di trasformazione in gara.",
       "parameters": {
         "stazione_appaltante": "Azienda Zero",
         "settore": "servizi informatici",
@@ -152,19 +223,16 @@
       "snapshot_date": "2026-06-02",
       "frozen_date": "2026-06-02",
       "ttl_days": 90,
-      "transformation_score_label": "alto",
-      "evidence": [
-        "PIN attivo pubblicato 2026-05-18 (CPV 72253000)",
-        "Ente sanitario regionale con budget IT significativo",
-        "Pattern ricorrente di aggiudicazioni CPV 72 negli ultimi 24 mesi"
-      ],
       "ground_truth_records": [
         {
           "source": "ted",
           "record_id": "338240-2026",
-          "note": "PIN TED attivo — Azienda Zero Padova, CPV 72253000, verificato run 2026-06-02"
+          "buyer": "Azienda Zero",
+          "cpv": "72253000",
+          "note": "PIN TED attivo incrociato con storico ANAC CPV 72 della SA"
         }
       ],
+      "empty_reason": null,
       "rubrics": {
         "D1": "judge",
         "D2": "deterministic",
@@ -174,33 +242,31 @@
         "D6": "judge",
         "D7": "judge"
       },
-      "refresh_instructions": "Ri-eseguire `python3 bench/ground-truth/label_ted_pins.py --cpv 72 --limit 25` per individuare PIN TED attivi. Incrociare manualmente con lo storico aggiudicazioni ANAC della SA (CPV prefix 72) e aggiornare l'identificativo del record, le `evidence` e `transformation_score_label`."
+      "refresh_instructions": "Incrociare PIN TED attivi con storico ANAC CPV 72 della SA; aggiornare golden 3.3-001, evidence e transformation_score_label.",
+      "transformation_score_label": "alto",
+      "evidence": [
+        "PIN attivo pubblicato 2026-05-18 (CPV 72253000)",
+        "Ente sanitario regionale con budget IT significativo",
+        "Pattern ricorrente di aggiudicazioni CPV 72 negli ultimi 24 mesi"
+      ]
     },
     {
       "id": "3.3-002",
+      "skill": "scheda-opportunita",
+      "scenario": "missing-data",
+      "tier": "frozen",
       "template": "3.3",
-      "prompt": "/scheda-opportunita Trova opportunità con PIN TED attivo + storico ANAC per CSI PIEMONTE su servizi informatici (CPV 72), con valutazione qualitativa di trasformazione in gara.",
+      "prompt": "/scheda-opportunita Trova opportunità con PIN TED attivo + storico ANAC per la stazione appaltante \"Comune di Norcia\" su servizi informatici (CPV 72). Scenario in cui non risultano PIN attivi.",
       "parameters": {
-        "stazione_appaltante": "CSI PIEMONTE",
+        "stazione_appaltante": "Comune di Norcia",
         "settore": "servizi informatici",
         "cpv_prefix": "72"
       },
       "snapshot_date": "2026-06-02",
       "frozen_date": "2026-06-02",
       "ttl_days": 90,
-      "transformation_score_label": "alto",
-      "evidence": [
-        "PIN attivo pubblicato 2026-05-19 (CPV 72210000)",
-        "CSI Piemonte: centrale di committenza ICT regionale con track record consolidato",
-        "Pattern ricorrente di pubblicazione gare entro 3-6 mesi da indagini di mercato"
-      ],
-      "ground_truth_records": [
-        {
-          "source": "ted",
-          "record_id": "340106-2026",
-          "note": "PIN TED attivo — CSI PIEMONTE, CPV 72210000, verificato run 2026-06-02"
-        }
-      ],
+      "ground_truth_records": [],
+      "empty_reason": "Nessun PIN TED attivo con storico ANAC coerente per la SA richiesta — scenario missing-data.",
       "rubrics": {
         "D1": "judge",
         "D2": "deterministic",
@@ -210,7 +276,299 @@
         "D6": "judge",
         "D7": "judge"
       },
-      "refresh_instructions": "Ri-eseguire `python3 bench/ground-truth/label_ted_pins.py --cpv 72 --limit 25` per individuare PIN TED attivi di CSI PIEMONTE. Incrociare manualmente con lo storico aggiudicazioni ANAC della SA."
+      "refresh_instructions": "Scenario missing-data: confermare assenza di PIN attivi con storico ANAC coerente.",
+      "transformation_score_label": "basso",
+      "evidence": [
+        "Nessun PIN TED attivo individuato per la SA",
+        "Storico ANAC assente o non coerente con CPV 72"
+      ]
+    },
+    {
+      "id": "3.3-003",
+      "skill": "scheda-opportunita",
+      "scenario": "edge",
+      "tier": "frozen",
+      "template": "3.3",
+      "prompt": "/scheda-opportunita Trova opportunità con PIN TED attivo + storico ANAC scarno per CSI Piemonte su servizi informatici (CPV 72).",
+      "parameters": {
+        "stazione_appaltante": "CSI Piemonte",
+        "settore": "servizi informatici",
+        "cpv_prefix": "72"
+      },
+      "snapshot_date": "2026-06-02",
+      "frozen_date": "2026-06-02",
+      "ttl_days": 90,
+      "ground_truth_records": [
+        {
+          "source": "ted",
+          "record_id": "340106-2026",
+          "buyer": "CSI Piemonte",
+          "cpv": "72210000",
+          "note": "Edge: PIN attivo ma storico ANAC scarno (poche aggiudicazioni)"
+        }
+      ],
+      "empty_reason": null,
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "Edge: PIN attivo ma storico ANAC scarno; aggiornare golden 3.3-003 e la valutazione qualitativa.",
+      "transformation_score_label": "medio",
+      "evidence": [
+        "PIN attivo pubblicato 2026-05-19 (CPV 72210000)",
+        "Storico ANAC della SA limitato: poche aggiudicazioni CPV 72"
+      ]
+    },
+    {
+      "id": "3.4-001",
+      "skill": "digest-pregara",
+      "scenario": "happy-path",
+      "tier": "live",
+      "template": "3.4",
+      "prompt": "/digest-pregara Prepara un digest pre-gara per le procedure imminenti sopra soglia UE su servizi informatici (CPV 72), Italia.",
+      "parameters": {
+        "settore": "servizi informatici",
+        "cpv": "72000000"
+      },
+      "snapshot_date": "2026-06-02",
+      "frozen_date": "2026-06-02",
+      "ttl_days": 60,
+      "ground_truth_records": [],
+      "empty_reason": "PENDING_LIVE_CAPTURE — eseguire bench/ground-truth/capture_golden.py --case 3.4-001 e verificare a mano (tier=live).",
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "tier=live: eseguire capture_golden.py --case 3.4-001 e verificare a mano prima di promuovere a frozen."
+    },
+    {
+      "id": "3.4-002",
+      "skill": "digest-pregara",
+      "scenario": "missing-data",
+      "tier": "frozen",
+      "template": "3.4",
+      "prompt": "/digest-pregara Prepara un digest pre-gara per procedure imminenti su servizi funerari (CPV 98370000), Italia.",
+      "parameters": {
+        "settore": "servizi funerari",
+        "cpv": "98370000"
+      },
+      "snapshot_date": "2026-06-02",
+      "frozen_date": "2026-06-02",
+      "ttl_days": 60,
+      "ground_truth_records": [],
+      "empty_reason": "Nessuna gara imminente per i parametri richiesti — scenario missing-data.",
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "Scenario missing-data: confermare assenza di gare imminenti per il CPV."
+    },
+    {
+      "id": "3.4-003",
+      "skill": "digest-pregara",
+      "scenario": "edge",
+      "tier": "frozen",
+      "template": "3.4",
+      "prompt": "/digest-pregara Prepara un digest pre-gara per un singolo bando appena sotto la soglia UE.",
+      "parameters": {
+        "caso": "sotto-soglia UE"
+      },
+      "snapshot_date": "2026-06-02",
+      "frozen_date": "2026-06-02",
+      "ttl_days": 60,
+      "ground_truth_records": [],
+      "empty_reason": "Edge: un solo bando al confine della soglia UE, nessun follow-on — golden vuoto atteso.",
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "Edge: bando al confine della soglia UE; golden vuoto atteso."
+    },
+    {
+      "id": "3.5-001",
+      "skill": "profilo-sa",
+      "scenario": "happy-path",
+      "tier": "live",
+      "template": "3.5",
+      "prompt": "/profilo-sa Costruisci il profilo della stazione appaltante Consip S.p.A. dallo storico aggiudicazioni ANAC.",
+      "parameters": {
+        "stazione_appaltante": "Consip S.p.A."
+      },
+      "snapshot_date": "2026-06-02",
+      "frozen_date": "2026-06-02",
+      "ttl_days": 120,
+      "ground_truth_records": [],
+      "empty_reason": "PENDING_LIVE_CAPTURE — eseguire bench/ground-truth/capture_golden.py --case 3.5-001 e verificare a mano (tier=live).",
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "tier=live: eseguire capture_golden.py --case 3.5-001 (storico ANAC della SA) e verificare a mano."
+    },
+    {
+      "id": "3.5-002",
+      "skill": "profilo-sa",
+      "scenario": "missing-data",
+      "tier": "frozen",
+      "template": "3.5",
+      "prompt": "/profilo-sa Costruisci il profilo della stazione appaltante \"Ente Di Prova Inesistente 99999\" dallo storico aggiudicazioni ANAC (atteso: nessuna aggiudicazione).",
+      "parameters": {
+        "stazione_appaltante": "Ente Di Prova Inesistente 99999"
+      },
+      "snapshot_date": "2026-06-02",
+      "frozen_date": "2026-06-02",
+      "ttl_days": 120,
+      "ground_truth_records": [],
+      "empty_reason": "Stazione appaltante senza aggiudicazioni ANAC nello snapshot — scenario missing-data.",
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "Scenario missing-data: confermare assenza di aggiudicazioni ANAC."
+    },
+    {
+      "id": "3.5-003",
+      "skill": "profilo-sa",
+      "scenario": "edge",
+      "tier": "frozen",
+      "template": "3.5",
+      "prompt": "/profilo-sa Costruisci il profilo di una stazione appaltante con una sola aggiudicazione storica.",
+      "parameters": {
+        "stazione_appaltante": "SA con singola aggiudicazione"
+      },
+      "snapshot_date": "2026-06-02",
+      "frozen_date": "2026-06-02",
+      "ttl_days": 120,
+      "ground_truth_records": [],
+      "empty_reason": "Edge: SA con una sola aggiudicazione storica — golden minimale/vuoto atteso.",
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "Edge: SA con storico minimale; golden minimale/vuoto atteso."
+    },
+    {
+      "id": "3.6-001",
+      "skill": "reconciliation-pnrr",
+      "scenario": "happy-path",
+      "tier": "frozen",
+      "template": "3.6",
+      "prompt": "/reconciliation-pnrr Riconcilia gli importi del progetto PNRR con CUP F96G22000400006 tra OpenPNRR e OpenCoesione.",
+      "parameters": {
+        "cup": "F96G22000400006",
+        "fonte": "openpnrr+opencoesione"
+      },
+      "snapshot_date": "2026-06-04",
+      "frozen_date": "2026-06-04",
+      "ttl_days": 120,
+      "ground_truth_records": [
+        {
+          "source": "openpnrr",
+          "record_id": "F96G22000400006",
+          "cup": "F96G22000400006",
+          "titolo": "010006 PRESIDIO OSPEDALIERO DI BORGOMANERO*VIALE ZOPPIS 10*AMMODERNAMENTO DEL PARCO TECNOLOGICO E DIGITALE DEL PRESIDIO OSPEDALIERO DI BORGOMANERO",
+          "finanziamento_totale": "3773260.36"
+        }
+      ],
+      "empty_reason": null,
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "tier=live: eseguire capture_golden.py --case 3.6-001 (CUP reale) e verificare a mano gli importi delle due fonti."
+    },
+    {
+      "id": "3.6-002",
+      "skill": "reconciliation-pnrr",
+      "scenario": "missing-data",
+      "tier": "frozen",
+      "template": "3.6",
+      "prompt": "/reconciliation-pnrr Riconcilia il CUP B00B00000000000 (CUP inesistente, atteso: non presente in OpenPNRR/OpenCoesione).",
+      "parameters": {
+        "cup": "B00B00000000000"
+      },
+      "snapshot_date": "2026-06-02",
+      "frozen_date": "2026-06-02",
+      "ttl_days": 120,
+      "ground_truth_records": [],
+      "empty_reason": "CUP non presente in OpenPNRR/OpenCoesione per i parametri richiesti — scenario missing-data.",
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "Scenario missing-data: confermare che il CUP non sia presente in nessuna delle due fonti."
+    },
+    {
+      "id": "3.6-003",
+      "skill": "reconciliation-pnrr",
+      "scenario": "edge",
+      "tier": "frozen",
+      "template": "3.6",
+      "prompt": "/reconciliation-pnrr Riconcilia gli importi del progetto PNRR con CUP F96G22000400006 verificando eventuali divergenze di importo tra le due fonti.",
+      "parameters": {
+        "cup": "F96G22000400006",
+        "caso": "verifica divergenze"
+      },
+      "snapshot_date": "2026-06-02",
+      "frozen_date": "2026-06-02",
+      "ttl_days": 120,
+      "ground_truth_records": [],
+      "empty_reason": "Edge: CUP presente ma senza importi riconciliabili tra le fonti — golden vuoto atteso.",
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "judge"
+      },
+      "refresh_instructions": "Edge: CUP presente ma importi non riconciliabili; golden vuoto atteso."
     }
   ]
 }

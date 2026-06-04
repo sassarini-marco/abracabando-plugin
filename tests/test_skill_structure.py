@@ -47,7 +47,6 @@ def test_profilo_sa_skill_has_required_sections() -> None:
 
 
 def test_sample_outputs_contain_required_elements() -> None:
-    import glob
     files = glob.glob(str(ROOT / "examples" / "sample_outputs" / "*.md"))
     assert files, "No sample output files found under examples/sample_outputs/"
     for path in files:

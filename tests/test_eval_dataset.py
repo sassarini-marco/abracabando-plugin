@@ -1,9 +1,12 @@
 import json
 import pathlib
+
 import jsonschema
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SCHEMA_PATH = ROOT / "bench" / "eval_dataset_schema.json"
+DATASET_PATH = ROOT / "bench" / "dataset" / "eval_dataset.json"
+SCHEMA_PATH = ROOT / "bench" / "dataset" / "eval_dataset_schema.json"
+REFRESH_PATH = ROOT / "bench" / "REFRESH_PROCEDURE.md"
 
 def test_schema_is_valid_json_schema():
     schema = json.loads(SCHEMA_PATH.read_text())
@@ -34,13 +37,13 @@ def test_rubrics_require_deterministic_d2_d4():
         jsonschema.validate(bad_dataset, schema)
 
 def test_eval_dataset_validates_against_schema():
-    schema = json.loads((ROOT / "bench" / "eval_dataset_schema.json").read_text())
-    data = json.loads((ROOT / "bench" / "eval_dataset.json").read_text())
+    schema = json.loads(SCHEMA_PATH.read_text())
+    data = json.loads(DATASET_PATH.read_text())
     jsonschema.validate(data, schema)
     assert len(data["cases"]) >= 6
 
 def test_no_numeric_transformation_scores():
-    data = json.loads((ROOT / "bench" / "eval_dataset.json").read_text())
+    data = json.loads(DATASET_PATH.read_text())
     valid_labels = {"basso", "medio", "alto"}
     for case in data["cases"]:
         if case["template"] == "3.3":
@@ -56,7 +59,7 @@ def test_judge_prompt_contains_required_sections():
 def test_judge_prompt_version_matches_dataset():
     import re
     prompt_text = (ROOT / "bench" / "judge_prompt_v1.md").read_text()
-    data = json.loads((ROOT / "bench" / "eval_dataset.json").read_text())
+    data = json.loads(DATASET_PATH.read_text())
     # Extract version from "## Version" section
     m = re.search(r'##\s+Version\s*\n+[*-]?\s*Version[^:]*:\s*([^\n]+)', prompt_text, re.I)
     if not m:
@@ -68,10 +71,10 @@ def test_judge_prompt_version_matches_dataset():
 def test_eval_dataset_not_gitignored():
     import subprocess
     result = subprocess.run(
-        ["git", "check-ignore", "-q", "bench/eval_dataset.json"],
+        ["git", "check-ignore", "-q", "bench/dataset/eval_dataset.json"],
         cwd=ROOT, capture_output=True
     )
-    assert result.returncode == 1, "bench/eval_dataset.json should NOT be gitignored"
+    assert result.returncode == 1, "bench/dataset/eval_dataset.json should NOT be gitignored"
 
 def test_eval_results_dir_is_gitignored():
     import subprocess
@@ -89,30 +92,57 @@ def test_judge_prompt_d7_references_sintesi_incrociata_fields():
 
 
 def test_refresh_procedure_covers_iteration_loop():
-    text = (ROOT / "bench" / "REFRESH_PROCEDURE.md").read_text()
+    text = REFRESH_PATH.read_text()
     assert "eval_report.py" in text
     assert "iteration" in text.lower()
     assert "D7" in text
 
 
 def test_refresh_procedure_covers_schema_evolution():
-    text = (ROOT / "bench" / "REFRESH_PROCEDURE.md").read_text()
+    text = REFRESH_PATH.read_text()
     assert "## 7. Evolving a skill schema" in text
     assert "schema_version" in text
 
 
+SKILL_TO_PREFIX = {
+    "pin-radar": "/pin-radar ",
+    "consultazioni-radar": "/consultazioni-radar ",
+    "scheda-opportunita": "/scheda-opportunita ",
+    "digest-pregara": "/digest-pregara ",
+    "profilo-sa": "/profilo-sa ",
+    "reconciliation-pnrr": "/reconciliation-pnrr ",
+}
+SCENARIOS = {"happy-path", "missing-data", "edge"}
+
+
 def test_eval_prompts_have_skill_prefix():
-    data = json.loads((ROOT / "bench" / "eval_dataset.json").read_text())
-    template_to_prefix = {"3.1": "/pin-radar ", "3.2": "/consultazioni-radar ", "3.3": "/scheda-opportunita "}
+    data = json.loads(DATASET_PATH.read_text())
     for case in data["cases"]:
-        expected_prefix = template_to_prefix.get(case["template"])
-        assert expected_prefix is not None, f"Unknown template {case['template']!r}"
+        expected_prefix = SKILL_TO_PREFIX.get(case["skill"])
+        assert expected_prefix is not None, f"Unknown skill {case.get('skill')!r}"
         assert case["prompt"].startswith(expected_prefix), (
             f"Case {case['id']}: prompt must start with {expected_prefix!r}, got {case['prompt'][:50]!r}"
         )
 
 
+def test_dataset_covers_all_six_skills_three_scenarios():
+    schema = json.loads(SCHEMA_PATH.read_text())
+    data = json.loads(DATASET_PATH.read_text())
+    jsonschema.validate(data, schema)
+
+    by_skill: dict[str, set] = {s: set() for s in SKILL_TO_PREFIX}
+    for case in data["cases"]:
+        assert case["skill"] in SKILL_TO_PREFIX, f"Unknown skill {case['skill']!r}"
+        assert case["scenario"] in SCENARIOS, f"Bad scenario {case['scenario']!r}"
+        assert case["tier"] in {"frozen", "live"}, f"Bad tier {case['tier']!r}"
+        assert case["prompt"].startswith(SKILL_TO_PREFIX[case["skill"]])
+        by_skill[case["skill"]].add(case["scenario"])
+
+    for skill, scenarios in by_skill.items():
+        assert scenarios == SCENARIOS, f"{skill} missing scenarios: {SCENARIOS - scenarios}"
+
+
 def test_refresh_procedure_covers_all_templates():
-    text = (ROOT / "bench" / "REFRESH_PROCEDURE.md").read_text()
+    text = REFRESH_PATH.read_text()
     for token in ["3.1", "3.2", "3.3", "ttl_days", "judge_prompt_version"]:
         assert token in text, f"Missing token in REFRESH_PROCEDURE.md: {token!r}"

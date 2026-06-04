@@ -1,0 +1,13 @@
+{
+  "case_id": "3.3-001",
+  "records": [
+    {
+      "source": "ted",
+      "record_id": "338240-2026",
+      "buyer": "Azienda Zero",
+      "cpv": "72253000",
+      "note": "PIN TED attivo incrociato con storico ANAC CPV 72 della SA"
+    }
+  ],
+  "empty_reason": null
+}

@@ -55,7 +55,25 @@ Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
 
 ### Parametri fissi
 - `limit`: 10 per pagina (evita overflow parsing);
-- `page`: 1 (poi eventualmente 2 se servono più risultati).
+- `page`: 1. **Recupera SOLO la prima pagina.** Non scorrere automaticamente le
+  pagine successive: analizzare decine di PIN in un'unica esecuzione è lento e
+  raramente utile.
+
+### Troppi risultati — chiedi all'utente di raffinare
+
+Se la prima pagina è piena (10 PIN restituiti) e la risposta indica altri
+risultati disponibili (`next_offset` valorizzato o `total` molto maggiore di 10),
+**non** recuperare altre pagine. Invece:
+
+1. analizza e classifica solo i PIN della prima pagina;
+2. aggiungi una sezione `## Affina la ricerca` che riporta il numero totale
+   stimato di PIN e invita l'utente a restringere il lookup, indicando le leve
+   disponibili: un **CPV più specifico** (es. `72212000` invece di `72000000`),
+   una **regione NUTS**, una **scadenza** (`deadline_before`), oppure di indicare
+   **quali PIN approfondire** tra quelli elencati.
+
+Così l'utente decide su quali PIN concentrare l'analisi, invece di ricevere una
+nota dispersiva su decine di risultati.
 
 ### Gestione output file troppo grande
 

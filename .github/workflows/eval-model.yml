@@ -1,0 +1,40 @@
+name: eval-model
+
+# Secret-gated frozen model-eval tier. Runs the real model headlessly against
+# RECORDED fixtures (bench/mcp_replay.json) — no live MCP, no 280MB download —
+# then enforces the deterministic merge gate. Fork PRs without the secret skip
+# cleanly.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  frozen-model-eval:
+    runs-on: ubuntu-latest
+    # Skip cleanly when the API key is unavailable (e.g. fork PRs).
+    if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dev dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Install claude (pinned)
+        run: npm i -g @anthropic-ai/claude-code@2.1.161
+
+      - name: Run frozen model eval (replay fixtures, deterministic scoring)
+        run: python3 bench/eval_runner.py --frozen --model claude-sonnet-4-6 --delay 0
+
+      - name: Deterministic regression gate
+        run: python3 bench/eval_report.py --gate
+
+  # Note: the frozen tier needs no live MCP server and no bulk-data download —
+  # responses are served from committed fixtures by bench/mcp_replay.py.

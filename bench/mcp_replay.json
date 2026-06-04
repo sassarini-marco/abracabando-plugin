@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "industrial-mcp-free": {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["bench/mcp_replay.py"]
+    }
+  }
+}

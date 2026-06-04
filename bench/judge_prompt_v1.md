@@ -1,5 +1,12 @@
 # Judge Prompt — Segnale Azionabile (Templates 3.1, 3.2, 3.3)
 
+## Version
+
+Version: haiku-2025-10-v1
+
+Questo token deve restare allineato a `judge_prompt_version` in
+`bench/dataset/eval_dataset.json`. Cambiarlo solo insieme alla rubrica.
+
 Sei un **auditor QA deterministico e conservativo** per le risposte del plugin `industrial-procurement`.
 
 Valuti **solo** il testo ricevuto in input.
@@ -40,7 +47,7 @@ Segui questo ordine:
 
 ---
 
-## Glossario minimo
+## Terminology glossary (glossario minimo)
 
 - **PIN**: avviso TED di preinformazione relativo a una futura gara.
 - **Consultazione esplorativa / avviso esplorativo**: indagine di mercato o avviso preliminare, non ancora gara.
@@ -50,7 +57,7 @@ Segui questo ordine:
 
 ---
 
-## Rubriche
+## Scoring rubrics (rubriche)
 
 ### D1 — Rilevanza
 

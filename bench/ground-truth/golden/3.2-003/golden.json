@@ -1,0 +1,12 @@
+{
+  "case_id": "3.2-003",
+  "records": [
+    {
+      "source": "consip",
+      "record_id": "rda-52302",
+      "status": "aperto",
+      "note": "Edge: singola RdA Adobe Creative Cloud al limite della categoria"
+    }
+  ],
+  "empty_reason": null
+}

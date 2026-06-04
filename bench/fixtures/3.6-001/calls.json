@@ -1,0 +1,17 @@
+[
+  {
+    "tool": "openpnrr_search_progetti",
+    "params": {
+      "query": "reconciliation-pnrr"
+    },
+    "key": "f3735675021d66975ae20bbfee819a1b5421fb9846f30f9a47753b19026e5b7e",
+    "response": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"items\": []}"
+        }
+      ]
+    }
+  }
+]
