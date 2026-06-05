@@ -1,6 +1,6 @@
 ---
 name: scheda-opportunita
-description: Produce una scheda dettagliata su una specifica opportunità di gara, incrociando ANAC, OpenPNRR, OpenCoesione e TED, con storico acquisti, intelligence competitiva, timeline attesa e raccomandazioni operative. Usa questa skill ogni volta che l'utente deve decidere go/no-go su una singola opportunità identificata da CIG, CUP o nome ente: vuole sapere se conviene partecipare, chi è l'incumbent o i concorrenti probabili, quando uscirà il bando, qual è lo storico dell'ente — anche se chiede semplicemente "mi conviene questa gara?" o "chi devo battere su questo CIG?".
+description: "Produce una scheda dettagliata su una specifica opportunità di gara, incrociando ANAC, OpenPNRR, OpenCoesione e TED, con storico acquisti, intelligence competitiva, timeline attesa e raccomandazioni operative. Usa questa skill ogni volta che l'utente deve decidere go/no-go su una singola opportunità identificata da CIG, CUP o nome ente: vuole sapere se conviene partecipare, chi è l'incumbent o i concorrenti probabili, quando uscirà il bando, qual è lo storico dell'ente — anche se chiede semplicemente \"mi conviene questa gara?\" o \"chi devo battere su questo CIG?\"."
 argument-hint: "<CIG|CUP|ente> [CPV]"
 disable-model-invocation: true
 allowed-tools:
