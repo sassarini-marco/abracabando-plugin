@@ -1,0 +1,305 @@
+{
+  "_note": "SEED baseline (deterministic-only, all-green). Re-bless after a real frozen run: python3 bench/eval_runner.py --frozen && python3 bench/eval_report.py --baseline",
+  "results": [
+    {
+      "id": "3.1-001",
+      "skill": "pin-radar",
+      "scenario": "happy-path",
+      "tier": "frozen",
+      "template": "3.1",
+      "d2_recall": 1.0,
+      "d4_freshness": true,
+      "output_rules": {
+        "first_line": true,
+        "italian_only": true,
+        "provenance": true,
+        "qualitative_confidence": true,
+        "no_tool_names": true,
+        "audit_trail": true,
+        "no_fabricated_ids": true
+      },
+      "layer": "skill_ok",
+      "overall_pass": true
+    },
+    {
+      "id": "3.1-002",
+      "skill": "pin-radar",
+      "scenario": "missing-data",
+      "tier": "frozen",
+      "template": "3.1",
+      "d2_recall": null,
+      "d4_freshness": true,
+      "output_rules": {
+        "first_line": true,
+        "italian_only": true,
+        "provenance": true,
+        "qualitative_confidence": true,
+        "no_tool_names": true,
+        "audit_trail": true,
+        "no_fabricated_ids": true
+      },
+      "layer": "skill_ok_no_data",
+      "overall_pass": true
+    },
+    {
+      "id": "3.1-003",
+      "skill": "pin-radar",
+      "scenario": "edge",
+      "tier": "frozen",
+      "template": "3.1",
+      "d2_recall": 1.0,
+      "d4_freshness": true,
+      "output_rules": {
+        "first_line": true,
+        "italian_only": true,
+        "provenance": true,
+        "qualitative_confidence": true,
+        "no_tool_names": true,
+        "audit_trail": true,
+        "no_fabricated_ids": true
+      },
+      "layer": "skill_ok",
+      "overall_pass": true
+    },
+    {
+      "id": "3.2-001",
+      "skill": "consultazioni-radar",
+      "scenario": "happy-path",
+      "tier": "frozen",
+      "template": "3.2",
+      "d2_recall": 1.0,
+      "d4_freshness": true,
+      "output_rules": {
+        "first_line": true,
+        "italian_only": true,
+        "provenance": true,
+        "qualitative_confidence": true,
+        "no_tool_names": true,
+        "audit_trail": true,
+        "no_fabricated_ids": true
+      },
+      "layer": "skill_ok",
+      "overall_pass": true
+    },
+    {
+      "id": "3.2-002",
+      "skill": "consultazioni-radar",
+      "scenario": "missing-data",
+      "tier": "frozen",
+      "template": "3.2",
+      "d2_recall": null,
+      "d4_freshness": true,
+      "output_rules": {
+        "first_line": true,
+        "italian_only": true,
+        "provenance": true,
+        "qualitative_confidence": true,
+        "no_tool_names": true,
+        "audit_trail": true,
+        "no_fabricated_ids": true
+      },
+      "layer": "skill_ok_no_data",
+      "overall_pass": true
+    },
+    {
+      "id": "3.2-003",
+      "skill": "consultazioni-radar",
+      "scenario": "edge",
+      "tier": "frozen",
+      "template": "3.2",
+      "d2_recall": 1.0,
+      "d4_freshness": true,
+      "output_rules": {
+        "first_line": true,
+        "italian_only": true,
+        "provenance": true,
+        "qualitative_confidence": true,
+        "no_tool_names": true,
+        "audit_trail": true,
+        "no_fabricated_ids": true
+      },
+      "layer": "skill_ok",
+      "overall_pass": true
+    },
+    {
+      "id": "3.3-001",
+      "skill": "scheda-opportunita",
+      "scenario": "happy-path",
+      "tier": "frozen",
+      "template": "3.3",
+      "d2_recall": 1.0,
+      "d4_freshness": true,
+      "output_rules": {
+        "first_line": true,
+        "italian_only": true,
+        "provenance": true,
+        "qualitative_confidence": true,
+        "no_tool_names": true,
+        "audit_trail": true,
+        "no_fabricated_ids": true
+      },
+      "layer": "skill_ok",
+      "overall_pass": true
+    },
+    {
+      "id": "3.3-002",
+      "skill": "scheda-opportunita",
+      "scenario": "missing-data",
+      "tier": "frozen",
+      "template": "3.3",
+      "d2_recall": null,
+      "d4_freshness": true,
+      "output_rules": {
+        "first_line": true,
+        "italian_only": true,
+        "provenance": true,
+        "qualitative_confidence": true,
+        "no_tool_names": true,
+        "audit_trail": true,
+        "no_fabricated_ids": true
+      },
+      "layer": "skill_ok_no_data",
+      "overall_pass": true
+    },
+    {
+      "id": "3.3-003",
+      "skill": "scheda-opportunita",
+      "scenario": "edge",
+      "tier": "frozen",
+      "template": "3.3",
+      "d2_recall": 1.0,
+      "d4_freshness": true,
+      "output_rules": {
+        "first_line": true,
+        "italian_only": true,
+        "provenance": true,
+        "qualitative_confidence": true,
+        "no_tool_names": true,
+        "audit_trail": true,
+        "no_fabricated_ids": true
+      },
+      "layer": "skill_ok",
+      "overall_pass": true
+    },
+    {
+      "id": "3.4-002",
+      "skill": "digest-pregara",
+      "scenario": "missing-data",
+      "tier": "frozen",
+      "template": "3.4",
+      "d2_recall": null,
+      "d4_freshness": true,
+      "output_rules": {
+        "first_line": true,
+        "italian_only": true,
+        "provenance": true,
+        "qualitative_confidence": true,
+        "no_tool_names": true,
+        "audit_trail": true,
+        "no_fabricated_ids": true
+      },
+      "layer": "skill_ok_no_data",
+      "overall_pass": true
+    },
+    {
+      "id": "3.4-003",
+      "skill": "digest-pregara",
+      "scenario": "edge",
+      "tier": "frozen",
+      "template": "3.4",
+      "d2_recall": null,
+      "d4_freshness": true,
+      "output_rules": {
+        "first_line": true,
+        "italian_only": true,
+        "provenance": true,
+        "qualitative_confidence": true,
+        "no_tool_names": true,
+        "audit_trail": true,
+        "no_fabricated_ids": true
+      },
+      "layer": "skill_ok_no_data",
+      "overall_pass": true
+    },
+    {
+      "id": "3.5-002",
+      "skill": "profilo-sa",
+      "scenario": "missing-data",
+      "tier": "frozen",
+      "template": "3.5",
+      "d2_recall": null,
+      "d4_freshness": true,
+      "output_rules": {
+        "first_line": true,
+        "italian_only": true,
+        "provenance": true,
+        "qualitative_confidence": true,
+        "no_tool_names": true,
+        "audit_trail": true,
+        "no_fabricated_ids": true
+      },
+      "layer": "skill_ok_no_data",
+      "overall_pass": true
+    },
+    {
+      "id": "3.5-003",
+      "skill": "profilo-sa",
+      "scenario": "edge",
+      "tier": "frozen",
+      "template": "3.5",
+      "d2_recall": null,
+      "d4_freshness": true,
+      "output_rules": {
+        "first_line": true,
+        "italian_only": true,
+        "provenance": true,
+        "qualitative_confidence": true,
+        "no_tool_names": true,
+        "audit_trail": true,
+        "no_fabricated_ids": true
+      },
+      "layer": "skill_ok_no_data",
+      "overall_pass": true
+    },
+    {
+      "id": "3.6-002",
+      "skill": "reconciliation-pnrr",
+      "scenario": "missing-data",
+      "tier": "frozen",
+      "template": "3.6",
+      "d2_recall": null,
+      "d4_freshness": true,
+      "output_rules": {
+        "first_line": true,
+        "italian_only": true,
+        "provenance": true,
+        "qualitative_confidence": true,
+        "no_tool_names": true,
+        "audit_trail": true,
+        "no_fabricated_ids": true
+      },
+      "layer": "skill_ok_no_data",
+      "overall_pass": true
+    },
+    {
+      "id": "3.6-003",
+      "skill": "reconciliation-pnrr",
+      "scenario": "edge",
+      "tier": "frozen",
+      "template": "3.6",
+      "d2_recall": null,
+      "d4_freshness": true,
+      "output_rules": {
+        "first_line": true,
+        "italian_only": true,
+        "provenance": true,
+        "qualitative_confidence": true,
+        "no_tool_names": true,
+        "audit_trail": true,
+        "no_fabricated_ids": true
+      },
+      "layer": "skill_ok_no_data",
+      "overall_pass": true
+    }
+  ]
+}

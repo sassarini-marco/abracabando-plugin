@@ -1,0 +1,17 @@
+[
+  {
+    "tool": "ted_pin_italy",
+    "params": {
+      "query": "pin-radar"
+    },
+    "key": "3b8c1d524f6d6ceaaafb38820da901c7cdb1b56e16fc60eda14facbe69b4291f",
+    "response": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"items\": [{\"source\": \"ted\", \"record_id\": \"26125-2026\", \"buyer\": \"ASL2 Lanciano Vasto Chieti\", \"cpv\": \"72500000\", \"status\": \"attivo\", \"note\": \"Edge: singolo PIN al confine della finestra temporale\"}]}"
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "tool": "ted_search",
+    "params": {
+      "query": "digest-pregara"
+    },
+    "key": "751c2b89662d479fd3108937b487f5b4e658a9ee66a5f5bda5f5ed84dd1d8f96",
+    "response": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"items\": []}"
+        }
+      ]
+    }
+  }
+]

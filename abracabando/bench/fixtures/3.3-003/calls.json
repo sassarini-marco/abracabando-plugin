@@ -1,0 +1,17 @@
+[
+  {
+    "tool": "ted_pin_italy",
+    "params": {
+      "query": "scheda-opportunita"
+    },
+    "key": "ecccf3052ca02752ef4ab8bf8cbfb7d6a002ea260f413df6187010bef1f03e50",
+    "response": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"items\": [{\"source\": \"ted\", \"record_id\": \"340106-2026\", \"buyer\": \"CSI Piemonte\", \"cpv\": \"72210000\", \"note\": \"Edge: PIN attivo ma storico ANAC scarno (poche aggiudicazioni)\"}]}"
+        }
+      ]
+    }
+  }
+]

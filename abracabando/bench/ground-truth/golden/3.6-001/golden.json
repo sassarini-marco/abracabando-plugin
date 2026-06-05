@@ -1,0 +1,18 @@
+{
+  "case_id": "3.6-001",
+  "records": [
+    {
+      "source": "anac",
+      "record_id": "B5B28D28E6",
+      "cup": "F99J22001320007",
+      "cig": "B5B28D28E6"
+    },
+    {
+      "source": "anac",
+      "record_id": "B64ED59903",
+      "cup": "F99J22001320007",
+      "cig": "B64ED59903"
+    }
+  ],
+  "empty_reason": null
+}

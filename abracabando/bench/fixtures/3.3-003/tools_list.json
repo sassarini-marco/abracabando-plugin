@@ -1,0 +1,28 @@
+{
+  "tools": [
+    {
+      "name": "anac_awards_by_piva"
+    },
+    {
+      "name": "anac_search_awards"
+    },
+    {
+      "name": "consip_search_bandi"
+    },
+    {
+      "name": "consip_search_consultazioni"
+    },
+    {
+      "name": "opencoesione_project_by_cup"
+    },
+    {
+      "name": "openpnrr_search_progetti"
+    },
+    {
+      "name": "ted_pin_italy"
+    },
+    {
+      "name": "ted_search"
+    }
+  ]
+}

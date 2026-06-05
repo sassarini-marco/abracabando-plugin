@@ -1,0 +1,17 @@
+[
+  {
+    "tool": "ted_pin_italy",
+    "params": {
+      "query": "pin-radar"
+    },
+    "key": "3b8c1d524f6d6ceaaafb38820da901c7cdb1b56e16fc60eda14facbe69b4291f",
+    "response": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"items\": [{\"source\": \"ted\", \"record_id\": \"338240-2026\", \"buyer\": \"Azienda Zero\", \"cpv\": \"72253000\", \"status\": \"attivo\", \"note\": \"PIN Azienda Zero Padova, pubblicato 2026-05-18\"}, {\"source\": \"ted\", \"record_id\": \"340106-2026\", \"buyer\": \"CSI Piemonte\", \"cpv\": \"72210000\", \"status\": \"attivo\", \"note\": \"PIN CSI Piemonte, pubblicato 2026-05-19\"}]}"
+        }
+      ]
+    }
+  }
+]

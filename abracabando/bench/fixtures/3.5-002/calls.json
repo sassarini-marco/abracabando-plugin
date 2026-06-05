@@ -1,0 +1,17 @@
+[
+  {
+    "tool": "anac_search_awards",
+    "params": {
+      "query": "profilo-sa"
+    },
+    "key": "78c887ca7075ddd89ac8367aa698f68399a60e6ee212eeaaf93db15c71f34a48",
+    "response": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"items\": []}"
+        }
+      ]
+    }
+  }
+]

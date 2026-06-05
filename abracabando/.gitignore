@@ -1,0 +1,12 @@
+# Benchmark artifacts — keep prompts.json, run_benchmark.py, REPORT.md and the
+# small per-query .json summaries; ignore the large raw transcripts and run logs.
+bench/results/*.jsonl
+bench/results/_*.log
+
+# Eval harness run outputs (transient -- do not commit)
+bench/eval_results/
+
+# Frozen replay fixtures MUST be committed (they are the deterministic gate's
+# recorded data). Un-ignore them explicitly in case a broader rule ever matches.
+!bench/fixtures/
+!bench/fixtures/**

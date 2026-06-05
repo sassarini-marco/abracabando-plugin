@@ -1,0 +1,17 @@
+[
+  {
+    "tool": "document_fetch_text",
+    "params": {
+      "url": "https://www.regione.test.it/gare/capitolato-lungo.pdf"
+    },
+    "key": "b2e8f5a1c4d7e0b3f6a9c2e5d8f1a4b7e0c3f6a9b2e5d8f1a4c7e0b3f6a9c2e5",
+    "response": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"source\": \"documents\", \"url\": \"https://www.regione.test.it/gare/capitolato-lungo.pdf\", \"kind\": \"pdf\", \"size_bytes\": 9437184, \"page_count\": 90, \"char_count\": 200000, \"truncated\": true, \"text\": \"REGIONE DI TEST\\nCapitolato Tecnico\\nServizi di sviluppo e manutenzione del sistema informativo regionale\\n\\nArt. 1 - Oggetto\\nIl presente capitolato tecnico disciplina i servizi di sviluppo, manutenzione evolutiva e correttiva del sistema informativo regionale.\\n\\nArt. 2 - Importo\\nL'importo a base d'asta \\u00e8 di EUR 2.400.000,00 IVA esclusa.\\n\\nArt. 3 - Durata\\nIl contratto ha durata di 36 mesi dalla data di stipula.\\n\\nArt. 5 - Requisiti di partecipazione\\n5.1 Requisiti economici e finanziari\\nFatturato globale medio degli ultimi tre esercizi finanziari: non inferiore a EUR 1.200.000,00.\\nFatturato specifico in servizi informatici per la pubblica amministrazione: non inferiore a EUR 600.000,00 negli ultimi tre anni.\\n\\n5.2 Requisiti tecnici e professionali\\nCertificazione ISO 9001:2015 in corso di validit\\u00e0.\\nAlmeno 3 contratti analoghi negli ultimi 5 anni con importo unitario non inferiore a EUR 300.000,00.\\nDisponibilit\\u00e0 di almeno 5 figure professionali certificate.\\n\\nArt. 7 - Criteri di aggiudicazione\\nL'aggiudicazione avverr\\u00e0 con il criterio dell'offerta economicamente pi\\u00f9 vantaggiosa.\\n\\nOfferta tecnica: massimo 70 punti\\nOfferta economica: massimo 30 punti\\n\\nSottocriteri offerta tecnica:\\n- Metodologia di lavoro e approccio: punteggio massimo 25\\n- Esperienza del team proposto: punteggio massimo 20\\n- Piano di progetto e cronoprogramma: punteggio massimo 15\\n- Strumenti e tecnologie: punteggio massimo 10\\n\\n[...testo troncato dopo 200.000 caratteri - il documento continua con allegati e specifiche tecniche...]\"}"
+        }
+      ]
+    }
+  }
+]

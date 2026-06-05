@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "industrial-mcp-free": {
+      "type": "streamable-http",
+      "url": "https://industrial-data-mcp-357772559530.europe-west1.run.app/mcp"
+    }
+  }
+}

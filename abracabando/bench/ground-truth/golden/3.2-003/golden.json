@@ -1,0 +1,16 @@
+{
+  "case_id": "3.2-003",
+  "records": [
+    {
+      "source": "consip",
+      "record_id": "https://www.consip.it/bandi/rda-52302",
+      "url": "https://www.consip.it/bandi/rda-52302"
+    },
+    {
+      "source": "consip",
+      "record_id": "https://www.consip.it/bandi/rda-52826",
+      "url": "https://www.consip.it/bandi/rda-52826"
+    }
+  ],
+  "empty_reason": null
+}

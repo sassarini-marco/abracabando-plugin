@@ -1,0 +1,17 @@
+[
+  {
+    "tool": "ted_pin_italy",
+    "params": {
+      "query": "pin-radar"
+    },
+    "key": "3b8c1d524f6d6ceaaafb38820da901c7cdb1b56e16fc60eda14facbe69b4291f",
+    "response": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"items\": []}"
+        }
+      ]
+    }
+  }
+]

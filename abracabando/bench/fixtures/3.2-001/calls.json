@@ -1,0 +1,17 @@
+[
+  {
+    "tool": "consip_search_consultazioni",
+    "params": {
+      "query": "consultazioni-radar"
+    },
+    "key": "220a5eed2d6a41115ea6098fd8cf5ca291a963348ba3859b39a98c4bd265bdc5",
+    "response": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"items\": [{\"source\": \"consip\", \"record_id\": \"rda-52841\", \"status\": \"aperto\", \"note\": \"RdA 52841 — Public Cloud IaaS e PaaS 2 AWS\"}, {\"source\": \"consip\", \"record_id\": \"rda-51125\", \"status\": \"aperto\", \"note\": \"RdA 51125 — Public Cloud IaaS e PaaS\"}]}"
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "case_id": "3.1-003",
+  "records": [
+    {
+      "source": "ted",
+      "record_id": "869066-2025",
+      "buyer": "SNAM S.P.A.",
+      "cpv": "71300000"
+    },
+    {
+      "source": "ted",
+      "record_id": "80912-2026",
+      "buyer": "ACI Informatica",
+      "cpv": "72000000"
+    }
+  ],
+  "empty_reason": null
+}

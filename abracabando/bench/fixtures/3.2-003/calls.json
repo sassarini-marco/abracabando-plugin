@@ -1,0 +1,17 @@
+[
+  {
+    "tool": "consip_search_consultazioni",
+    "params": {
+      "query": "consultazioni-radar"
+    },
+    "key": "220a5eed2d6a41115ea6098fd8cf5ca291a963348ba3859b39a98c4bd265bdc5",
+    "response": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"items\": [{\"source\": \"consip\", \"record_id\": \"rda-52302\", \"status\": \"aperto\", \"note\": \"Edge: singola RdA Adobe Creative Cloud al limite della categoria\"}]}"
+        }
+      ]
+    }
+  }
+]

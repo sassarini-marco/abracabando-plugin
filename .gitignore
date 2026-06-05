@@ -4,11 +4,6 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Benchmark artifacts — keep prompts.json, run_benchmark.py, REPORT.md and the
-# small per-query .json summaries; ignore the large raw transcripts and run logs.
-bench/results/*.jsonl
-bench/results/_*.log
-
 # Local MCP bulk cache (if ever placed in-repo)
 .cache/
 *.parquet
@@ -18,3 +13,6 @@ bench/results/_*.log
 .idea/
 .vscode/
 *.swp
+
+# Local Claude Code user settings (never commit)
+.claude/

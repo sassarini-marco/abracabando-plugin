@@ -1,0 +1,16 @@
+{
+  "case_id": "3.5-001",
+  "records": [
+    {
+      "source": "anac",
+      "record_id": "BB7687DCEB",
+      "stazione_appaltante": "AZIENDA SANITARIA PROVINCIALE DI CATANIA"
+    },
+    {
+      "source": "anac",
+      "record_id": "BB70CB5F67",
+      "stazione_appaltante": "AZIENDA SANITARIA PROVINCIALE DI CATANIA"
+    }
+  ],
+  "empty_reason": null
+}
