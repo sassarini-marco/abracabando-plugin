@@ -34,27 +34,19 @@ AbracaBando collega Claude direttamente a tutte queste fonti. Scrivi in italiano
 
 ## Installazione
 
-**Prerequisiti:** [Claude Code](https://claude.ai/code) ≥ 2.1, Python ≥ 3.11, [`uv`](https://docs.astral.sh/uv/).
+**Prerequisiti:** [Claude Code](https://claude.ai/code) ≥ 2.1.
 
-1. Installa il server dati ([`industrial-mcp`](https://github.com/fed3c3sa/industrial-data-mcp)):
-   ```bash
-   git clone https://github.com/fed3c3sa/industrial-data-mcp.git
-   uv tool install ./industrial-data-mcp
-   ```
-2. Installa il plugin:
+1. Installa il plugin:
    ```bash
    /plugin marketplace add sassarini-marco/abracabando-plugin
    /plugin install abracabando@abracabando
    ```
-3. Riavvia Claude Code e verifica:
+2. Riavvia Claude Code e verifica:
    ```bash
    claude plugin list    # → abracabando … ✔ enabled
-   claude mcp list       # → industrial-mcp-free … ✓ Connected
    ```
 
-Nessuna API key. Tutte le fonti sono open data istituzionali.
-
-> **La prima interrogazione scarica ~280 MB** di dati in `~/.cache/industrial-mcp/` (una tantum — le interrogazioni successive sono immediate).
+Nessuna API key. Il server dati è ospitato — nessuna installazione aggiuntiva necessaria.
 
 ---
 

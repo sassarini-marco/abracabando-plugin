@@ -36,7 +36,7 @@ Marketplace — AbracaBando
 /plugin install abracabando@abracabando
 ```
 
-> In modalità free installa prima il server dati locale (vedi guida completa). In modalità pro il server è raggiungibile via HTTP — nessuna configurazione aggiuntiva.
+> Il server dati è ospitato — nessuna configurazione aggiuntiva necessaria.
 
 ---
 
