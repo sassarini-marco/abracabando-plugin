@@ -1,5 +1,6 @@
 {
   "name": "abracabando",
+  "description": "Interroga in linguaggio naturale la spesa pubblica italiana — contratti ANAC, bandi TED, fondi PNRR, OpenCoesione, Consip. Risposte strutturate in italiano con fonte e data per ogni dato.",
   "owner": {
     "name": "Marco Sassarini & Federico Cesarini",
     "email": "abracabando.ai@gmail.com"

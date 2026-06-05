@@ -43,7 +43,7 @@ AbracaBando collega Claude direttamente a tutte queste fonti. Scrivi in italiano
    ```
 2. Installa il plugin:
    ```bash
-   /plugin marketplace add abracabando/abracabando
+   /plugin marketplace add sassarini-marco/abracabando-plugin
    /plugin install abracabando@abracabando
    ```
 3. Riavvia Claude Code e verifica:
