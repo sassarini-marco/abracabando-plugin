@@ -4,8 +4,10 @@ description: Scarica e analizza un disciplinare o capitolato tecnico di gara (PD
 argument-hint: "<URL documento> [CIG per contesto]"
 disable-model-invocation: true
 allowed-tools:
+  - mcp__industrial-mcp-pro__server_capabilities
   - mcp__industrial-mcp-pro__document_fetch_text
   - mcp__industrial-mcp-pro__anac_award_detail
+  - mcp__industrial-mcp-free__server_capabilities
   - mcp__industrial-mcp-free__document_fetch_text
   - mcp__industrial-mcp-free__anac_award_detail
 ---

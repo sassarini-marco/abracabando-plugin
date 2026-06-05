@@ -4,10 +4,12 @@ description: Analizza il mercato di pre-gara per un settore CPV o una regione, i
 argument-hint: "[CPV] [regione] [anno]"
 disable-model-invocation: true
 allowed-tools:
+  - mcp__industrial-mcp-pro__server_capabilities
   - mcp__industrial-mcp-pro__programmazione_search_biennale
   - mcp__industrial-mcp-pro__ted_pin_italy
   - mcp__industrial-mcp-pro__openpnrr_list
   - mcp__industrial-mcp-pro__openpnrr_get
+  - mcp__industrial-mcp-free__server_capabilities
   - mcp__industrial-mcp-free__programmazione_search_biennale
   - mcp__industrial-mcp-free__ted_pin_italy
   - mcp__industrial-mcp-free__openpnrr_list

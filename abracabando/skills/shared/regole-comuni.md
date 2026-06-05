@@ -7,6 +7,16 @@ Queste regole si applicano a tutte le skill del plugin:
   vai dritto al documento. È tollerata al massimo una breve frase introduttiva,
   ma l'intestazione `Dati letti il` deve comparire entro le prime righe.
 
+- **Quando uno strumento restituisce un testo che inizia con `LIMITE_PIANO_FREE:`**,
+  interrompi immediatamente qualsiasi ulteriore chiamata e aggiungi la sezione
+  seguente all'output (non usare `## Dati non disponibili` per questo caso):
+
+  ```
+  ## Limite piano free
+
+  <testo restituito dallo strumento>
+  ```
+
 - **Quando manca un parametro obbligatorio** (es. nessun CIG/CUP/ente fornito
   e la skill non può avviare la ricerca senza), **chiedi all'utente** di
   specificarlo — non emettere un documento vuoto e inutile.
@@ -32,6 +42,7 @@ Ogni skill struttura l'audit trail a modo suo (vedi il `references/output-format
 della singola skill), ma il blocco fenced deve **sempre** contenere almeno:
 
 - le query / chiamate effettuate, con i parametri essenziali;
+- `server_tier: "pro" | "free"` — tier rilevato dalla capability probe;
 - `tool_preferito: "pro" | "free"` — quale livello di strumenti è stato usato;
 - `fallback_attivato: "si" | "no"` — se è scattato il passaggio da pro a free
   (vedi `strategia-strumenti.md`);

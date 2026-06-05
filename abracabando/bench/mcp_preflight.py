@@ -175,14 +175,61 @@ def attribute_layer(answer: str, mcp_records: list[dict], golden_records: list[d
 # Live MCP preflight
 # --------------------------------------------------------------------------- #
 
-def _default_call_tool(tool: str, params: dict, mcp_config: Path) -> object:
-    """Invoke a single MCP tool over stdio using the server in ``mcp_config``.
+def _http_call_tool(tool: str, params: dict, url: str) -> object:
+    """Invoke a single MCP tool over streamable-http.
 
-    Minimal JSON-RPC 2.0 stdio client: initialize, notify initialized,
-    tools/call, read the matching response. Used only on the live tier.
+    Handles the Mcp-Session-Id header that FastMCP streamable-http requires:
+    the initialize response carries the session ID which must be echoed back
+    in all subsequent requests.
+    """
+    import urllib.request as _urlreq
+
+    session_id: list[str] = []  # mutable container for closure
+
+    def _post(body: dict) -> dict:
+        data = json.dumps(body).encode()
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/event-stream",
+        }
+        if session_id:
+            headers["Mcp-Session-Id"] = session_id[0]
+        req = _urlreq.Request(url, data=data, headers=headers)
+        with _urlreq.urlopen(req, timeout=30) as resp:
+            sid = resp.headers.get("Mcp-Session-Id")
+            if sid and not session_id:
+                session_id.append(sid)
+            raw = resp.read()
+            ct = resp.headers.get("Content-Type", "")
+            if "event-stream" in ct:
+                for line in raw.decode().splitlines():
+                    if line.startswith("data:"):
+                        return json.loads(line[5:].strip())
+                raise MCPEmptyError(f"empty SSE response from {url}")
+            return json.loads(raw)
+
+    _post({"jsonrpc": "2.0", "id": 1, "method": "initialize",
+           "params": {"protocolVersion": "2024-11-05", "capabilities": {},
+                      "clientInfo": {"name": "preflight", "version": "0"}}})
+    _post({"jsonrpc": "2.0", "method": "notifications/initialized"})
+    resp = _post({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+                  "params": {"name": tool, "arguments": params}})
+    return resp.get("result", resp)
+
+
+def _default_call_tool(tool: str, params: dict, mcp_config: Path) -> object:
+    """Invoke a single MCP tool using the server declared in ``mcp_config``.
+
+    Supports both stdio (local) and streamable-http (hosted) server types.
     """
     cfg = json.loads(Path(mcp_config).read_text())
     server = next(iter(cfg["mcpServers"].values()))
+    server_type = server.get("type", "stdio")
+
+    if server_type == "streamable-http":
+        return _http_call_tool(tool, params, server["url"])
+
+    # stdio path
     cmd = [server["command"], *server.get("args", [])]
     proc = subprocess.Popen(
         cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True

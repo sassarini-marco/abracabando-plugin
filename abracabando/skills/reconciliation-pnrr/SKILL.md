@@ -4,6 +4,7 @@ description: "Riconcilia i dati PNRR tra OpenPNRR, OpenCoesione e ANAC per uno o
 argument-hint: "<CUP> [misura_pnrr]"
 disable-model-invocation: true
 allowed-tools:
+  - mcp__industrial-mcp-pro__server_capabilities
   - mcp__industrial-mcp-pro__openpnrr_list
   - mcp__industrial-mcp-pro__openpnrr_get
   - mcp__industrial-mcp-pro__opencoesione_project_by_cup
@@ -11,6 +12,7 @@ allowed-tools:
   - mcp__industrial-mcp-pro__anac_search_awards
   - mcp__industrial-mcp-pro__anac_pnrr_datasets
   - mcp__industrial-mcp-pro__ted_search
+  - mcp__industrial-mcp-free__server_capabilities
   - mcp__industrial-mcp-free__openpnrr_list
   - mcp__industrial-mcp-free__openpnrr_get
   - mcp__industrial-mcp-free__opencoesione_project_by_cup

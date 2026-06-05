@@ -4,7 +4,9 @@ description: Monitora i Prior Information Notice (PIN) pubblicati su TED per l'I
 argument-hint: "[CPV] [regione/NUTS]"
 disable-model-invocation: true
 allowed-tools:
+  - mcp__industrial-mcp-pro__server_capabilities
   - mcp__industrial-mcp-pro__ted_pin_italy
+  - mcp__industrial-mcp-free__server_capabilities
   - mcp__industrial-mcp-free__ted_pin_italy
   - Bash
 ---

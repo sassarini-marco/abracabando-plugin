@@ -531,11 +531,13 @@ def main() -> None:
         golden_records = load_golden_records(cid)
         os.environ["MCP_REPLAY_CASE"] = cid  # tell the replay server which fixture to load
 
+        t0 = time.time()
         try:
             run = run_case_detailed(case, PLUGIN, mcp_config, timeout=timeout, model=args.model)
         except PluginLoadError as exc:
             print(f"  [{cid}] FAIL FAST: {exc}", file=sys.stderr)
             sys.exit(2)
+        wall_time_s = round(time.time() - t0, 1)
         answer = run["answer"]
         answers[cid] = answer
 
@@ -548,6 +550,7 @@ def main() -> None:
             mcp_tools=run.get("mcp_tools"), mcp_calls=run.get("mcp_calls"),
         )
         result["timed_out"] = run.get("timed_out", False)
+        result["wall_time_s"] = wall_time_s
         partial_results[cid] = result
         # Write immediately so an interrupted run leaves partial results on disk.
         EVAL_RESULTS.mkdir(exist_ok=True)
@@ -563,7 +566,8 @@ def main() -> None:
                      f"tools={result.get('mcp_tools_called')} render={rf_str}")
         print(
             f"         D2={d2_str}  D4={result['d4_freshness']}  "
-            f"layer={result['layer']}  pass={result['overall_pass']}{extra}"
+            f"layer={result['layer']}  pass={result['overall_pass']}  "
+            f"time={wall_time_s}s{extra}"
         )
 
     # Submit judge batch only on the live tier with an API key.
@@ -591,7 +595,14 @@ def main() -> None:
             out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2))
             print(f"  [{cid}] Updated with judge dims -> {out_path}")
 
-    print(f"\nDone. Results in {EVAL_RESULTS}")
+    times = [r.get("wall_time_s", 0) for r in partial_results.values() if r.get("wall_time_s")]
+    if times:
+        print(
+            f"\nTiming — total: {sum(times):.1f}s  "
+            f"mean: {sum(times)/len(times):.1f}s  "
+            f"min: {min(times):.1f}s  max: {max(times):.1f}s"
+        )
+    print(f"Done. Results in {EVAL_RESULTS}")
 
 
 if __name__ == "__main__":

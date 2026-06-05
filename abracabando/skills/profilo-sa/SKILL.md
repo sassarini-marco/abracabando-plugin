@@ -4,8 +4,10 @@ description: "Genera un profilo quantitativo di una stazione appaltante basato s
 argument-hint: "<nome ente> [CF ente]"
 disable-model-invocation: true
 allowed-tools:
+  - mcp__industrial-mcp-pro__server_capabilities
   - mcp__industrial-mcp-pro__anac_sa_history
   - mcp__industrial-mcp-pro__anac_search_awards
+  - mcp__industrial-mcp-free__server_capabilities
   - mcp__industrial-mcp-free__anac_sa_history
   - mcp__industrial-mcp-free__anac_search_awards
 ---

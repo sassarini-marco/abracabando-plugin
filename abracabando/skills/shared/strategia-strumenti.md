@@ -1,6 +1,105 @@
 # Strategia strumenti — preferenza pro con fallback free
 
-Tutte le skill seguono questa strategia di invocazione strumenti:
+## Passo 0 — Capability probe (CONSIGLIATO, prima di qualsiasi altra chiamata)
+
+Il server applica i limiti di budget autonomamente lato server: quando il
+budget è esaurito restituisce un messaggio `LIMITE_PIANO_FREE:` che la skill
+deve gestire come descritto in `regole-comuni.md`.
+
+La probe è comunque consigliata perché permette alla skill di pianificare in
+anticipo l'utilizzo del budget (es. dare priorità alle fonti più rilevanti) e
+di registrare `server_tier` nell'audit trail. È esente dal conteggio del budget.
+
+**Sequenza:**
+
+1. Tenta `mcp__industrial-mcp-pro__server_capabilities` (nessun argomento).
+   - Se risponde con JSON valido → tier **pro**, usa i valori restituiti.
+2. Se fallisce, tenta `mcp__industrial-mcp-free__server_capabilities` (nessun argomento).
+   - Se risponde con JSON valido → tier **free**, usa i valori restituiti.
+3. Se entrambi falliscono (server precedente senza questo strumento) →
+   applica i **default free** hardcoded.
+
+**Struttura della risposta:**
+
+```json
+{
+  "tier": "free",
+  "max_results_per_call": 5,
+  "max_total_calls": 10,
+  "blocked_tools": [],
+  "data_freshness_days": 30
+}
+```
+
+**Default free** (fallback se il tool non esiste):
+
+| Campo | Free | Pro |
+|---|---|---|
+| `max_results_per_call` | `5` | `20` |
+| `max_total_calls` | `10` | `20` |
+| `blocked_tools` | `[]` | `[]` |
+| `data_freshness_days` | `30` | `7` |
+
+**Come applicare i limiti:**
+
+- Usa `max_results_per_call` come valore del parametro `limit` / `rows` in ogni
+  chiamata successiva. Non superarlo mai.
+- Conta ogni chiamata MCP (inclusa la probe). Fermati quando raggiungi `max_total_calls`.
+- Non invocare mai uno strumento il cui nome breve (parte dopo `__`) compare in
+  `blocked_tools`. Se era previsto nella strategia della skill, segna la sezione
+  corrispondente come `## Dati non disponibili`.
+- Registra `server_tier` nell'`## Audit trail`.
+
+---
+
+## Passo 0.5 — Pianificazione delle chiamate (prima di iniziare)
+
+Dopo la probe, pianifica l'intera sequenza prima di invocare qualsiasi strumento dati.
+
+### Salta il tentativo pro se tier=free
+
+Se la probe restituisce `tier: "free"`, **chiama direttamente gli strumenti free**
+senza tentare prima il pro. Il server pro è un placeholder disconnesso: il
+tentativo pro aggiunge solo latenza senza mai produrre dati.
+
+Se la probe restituisce `tier: "pro"`, segui il Passo 1 (pro → fallback free).
+
+### Ordine di priorità: leggero prima, bulk dopo
+
+Con il budget limitato, chiama prima gli strumenti che rispondono in meno di 2
+secondi e non richiedono download bulk. Lascia gli strumenti bulk per ultimi,
+solo se il budget lo consente.
+
+**Strumenti leggeri** (API dirette, nessun download, chiamare per primi):
+
+| Categoria | Strumenti |
+|---|---|
+| TED (EU) | `ted_search`, `ted_pin_italy`, `ted_get_notice_xml` |
+| Consip | `consip_search_bandi`, `consip_search_consultazioni`, `consip_chiarimenti` |
+| OpenPNRR | `openpnrr_list`, `openpnrr_get`, `openpnrr_search_progetti` |
+| OpenCoesione lookup | `opencoesione_project_by_cup`, `opencoesione_project_url` |
+| ANAC catalogo | `anac_list_datasets`, `anac_get_dataset`, `anac_search_datasets`, `anac_pnrr_datasets`, `anac_ocds_bulk_url` |
+| Altro | `cpv_*`, `mef_*`, `dati_*`, `imprese_*`, `programmazione_*`, `italiadomani_*` |
+
+**Strumenti bulk** (scaricano file pesanti su cold start, 30–60 s; chiamare per ultimi):
+
+| Categoria | Strumenti |
+|---|---|
+| ANAC aggiudicazioni | `anac_search_awards`, `anac_award_detail`, `anac_sa_history`, `anac_awards_by_cup`, `anac_awards_by_piva` |
+| OpenCoesione dati | `opencoesione_search_projects`, `opencoesione_describe_dataset`, `opencoesione_download_parquet` |
+
+### Regola di deduplica
+
+Non invocare mai due strumenti diversi per ottenere lo stesso dato. Se un
+risultato leggero contiene già un CIG o CUP, non ri-cercarlo con uno strumento
+bulk — usa il valore già ottenuto.
+
+---
+
+## Passo 1 — Preferenza pro con fallback free
+
+Tutte le skill seguono questa strategia di invocazione strumenti (applicabile
+solo quando tier=pro dalla probe; se tier=free, vai direttamente al free):
 
 Preferisci sempre gli strumenti **pro** (prefisso `mcp__industrial-mcp-pro__`).
 

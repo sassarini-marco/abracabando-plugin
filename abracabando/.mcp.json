@@ -1,9 +1,8 @@
 {
   "mcpServers": {
     "industrial-mcp-free": {
-      "type": "stdio",
-      "command": "industrial-mcp",
-      "args": []
+      "type": "streamable-http",
+      "url": "https://industrial-data-mcp-357772559530.europe-west1.run.app/mcp"
     },
     "industrial-mcp-pro": {
       "type": "streamable-http",

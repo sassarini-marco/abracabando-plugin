@@ -4,8 +4,10 @@ description: Monitora consultazioni di mercato, avvisi esplorativi e bandi Consi
 argument-hint: "<settore> [tecnologia]"
 disable-model-invocation: true
 allowed-tools:
+  - mcp__industrial-mcp-pro__server_capabilities
   - mcp__industrial-mcp-pro__consip_search_consultazioni
   - mcp__industrial-mcp-pro__consip_search_bandi
+  - mcp__industrial-mcp-free__server_capabilities
   - mcp__industrial-mcp-free__consip_search_consultazioni
   - mcp__industrial-mcp-free__consip_search_bandi
 ---

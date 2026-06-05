@@ -4,12 +4,16 @@ description: "Produce una scheda dettagliata su una specifica opportunità di ga
 argument-hint: "<CIG|CUP|ente> [CPV]"
 disable-model-invocation: true
 allowed-tools:
+  - mcp__industrial-mcp-pro__server_capabilities
   - mcp__industrial-mcp-pro__anac_search_awards
+  - mcp__industrial-mcp-pro__anac_search_datasets
+  - mcp__industrial-mcp-pro__anac_get_dataset
   - mcp__industrial-mcp-pro__ted_search
   - mcp__industrial-mcp-pro__openpnrr_list
   - mcp__industrial-mcp-pro__openpnrr_get
   - mcp__industrial-mcp-pro__opencoesione_describe_dataset
   - mcp__industrial-mcp-pro__opencoesione_list_datasets
+  - mcp__industrial-mcp-free__server_capabilities
   - mcp__industrial-mcp-free__anac_search_awards
   - mcp__industrial-mcp-free__anac_search_datasets
   - mcp__industrial-mcp-free__anac_get_dataset
