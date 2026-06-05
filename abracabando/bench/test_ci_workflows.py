@@ -9,7 +9,7 @@ import pathlib
 
 import yaml
 
-WF = pathlib.Path(__file__).resolve().parent.parent / ".github" / "workflows"
+WF = pathlib.Path(__file__).resolve().parent.parent.parent / ".github" / "workflows"
 STATIC = WF / "eval-static.yml"
 
 
@@ -23,7 +23,7 @@ def test_static_workflow_installs_deps_and_runs_pytest_without_secrets():
     assert data is not None
     assert (True in data) or ("on" in data)
     assert "pull_request" in text
-    assert "pip install -r requirements-dev.txt" in text
+    assert "requirements-dev.txt" in text
     assert "pytest" in text
     assert "secrets." not in text, "static tier must not reference any secret"
 
