@@ -5,12 +5,19 @@
 Marketplace — AbracaBando
 
 <div align="center">
+
   <img src="abracabando/assets/hero.png" width="500" alt="AbracaBando — intelligence sulla spesa pubblica italiana">
+
+  <br><br>
+
+  <p><em>Cinque portali pubblici. Tre ore di lavoro manuale. Un'analisi ancora incompleta.</em></p>
+
+  <h3>Quello che ti costa 3 ore, ad AbracaBando bastano 3 minuti.</h3>
+
+  <p>Contratti ANAC · bandi TED · progetti PNRR · fondi OpenCoesione · consultazioni Consip<br>
+  Tutto in italiano, con fonte e data per ogni dato.</p>
+
 </div>
-
-Cinque portali pubblici. Tre ore di lavoro manuale. Un'analisi ancora incompleta.
-
-**Quello che ti costa 3 ore, ad AbracaBando bastano 3 minuti** — contratti ANAC, bandi TED, progetti PNRR, fondi OpenCoesione, consultazioni Consip. Tutto in italiano, con fonte e data per ogni dato.
 
 ---
 
