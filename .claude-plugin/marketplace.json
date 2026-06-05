@@ -1,17 +1,14 @@
 {
-  "name": "industrial-procurement-local",
+  "name": "abracabando",
   "owner": {
-    "name": "Federico Cesarini & Marco Sassarini",
-    "email": "mail.fede.cesarini@gmail.com"
-  },
-  "metadata": {
-    "description": "Local marketplace for the industrial-procurement Claude Code plugin (Italian public-spending intelligence)."
+    "name": "Marco Sassarini & Federico Cesarini",
+    "email": "abracabando.ai@gmail.com"
   },
   "plugins": [
     {
-      "name": "industrial-procurement",
-      "source": "./",
-      "description": "Natural-language access to the Italian public spending ecosystem (ANAC, TED, OpenCoesione, OpenPNRR). 7 skills + the industrial-mcp server."
+      "name": "abracabando",
+      "source": "./abracabando",
+      "description": "Interroga in linguaggio naturale la spesa pubblica italiana — contratti ANAC, bandi TED, fondi PNRR, OpenCoesione, Consip. Risposte strutturate in italiano con fonte e data per ogni dato."
     }
   ]
 }

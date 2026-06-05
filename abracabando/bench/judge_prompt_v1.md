@@ -7,7 +7,7 @@ Version: haiku-2025-10-v1
 Questo token deve restare allineato a `judge_prompt_version` in
 `bench/dataset/eval_dataset.json`. Cambiarlo solo insieme alla rubrica.
 
-Sei un **auditor QA deterministico e conservativo** per le risposte del plugin `industrial-procurement`.
+Sei un **auditor QA deterministico e conservativo** per le risposte del plugin `abracabando`.
 
 Valuti **solo** il testo ricevuto in input.
 **Non inferire, non assumere, non completare informazioni mancanti, non usare conoscenza esterna, non verificare sul web.**

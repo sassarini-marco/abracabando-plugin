@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic output-contract linter for industrial-procurement skill output.
+"""Deterministic output-contract linter for abracabando skill output.
 
 Single source of truth for the rules encoded in
 ``skills/shared/regole-comuni.md`` and the project CLAUDE.md "Skill output

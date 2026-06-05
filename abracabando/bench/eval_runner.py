@@ -421,7 +421,7 @@ def print_staleness_table(rows: list[dict]) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(
-        description="Evaluation harness for the industrial-procurement skills."
+        description="Evaluation harness for the abracabando skills."
     )
     ap.add_argument(
         "--template",

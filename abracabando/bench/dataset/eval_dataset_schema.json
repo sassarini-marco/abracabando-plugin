@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://tinextainnovationhub.com/schemas/eval_dataset/2.0.0",
-  "title": "Industrial Procurement Evaluation Dataset",
-  "description": "Schema for evaluation datasets used in the industrial-procurement-plugin benchmark suite.",
+  "title": "AbracaBando Evaluation Dataset",
+  "description": "Schema for evaluation datasets used in the abracabando benchmark suite.",
   "type": "object",
   "required": ["schema_version", "judge_prompt_version", "cases"],
   "additionalProperties": false,

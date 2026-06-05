@@ -2,7 +2,7 @@
 
 ---
 
-## [Unreleased] — feature/improve_skills_and_add_evals
+## [0.1.0] — 2026-06-05
 
 ### Nuova skill
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A Claude Code plugin giving natural-language access to the Italian public-spending ecosystem (ANAC contracts, TED EU tenders, OpenCoesione, OpenPNRR, regional planning). It ships 6 Italian-language skills in `skills/`, backed by the separate `industrial-mcp` server (declared in `.mcp.json`, installed via `uv tool install` and exposed on PATH as `industrial-mcp` — it is NOT in this repo).
+A Claude Code plugin giving natural-language access to the Italian public-spending ecosystem (ANAC contracts, TED EU tenders, OpenCoesione, OpenPNRR, regional planning). The repo root is the marketplace (`.claude-plugin/marketplace.json`); the actual plugin lives in `abracabando/` (`.claude-plugin/plugin.json`, `skills/`, `.mcp.json`). The `industrial-mcp` server is a separate repo, installed via `uv tool install` and exposed on PATH — it is NOT in this repo.
 
 ## Skill output rules (critical — skills must not violate these)
 
@@ -20,20 +20,32 @@ These are enforced by `skills/shared/regole-comuni.md` and checked by the eval h
 ## Commands
 
 ```bash
-python3 -m pytest tests -q                          # unit tests (skill structure, manifests, dataset schema)
-claude plugin validate industrial-procurement-plugin # validate plugin manifest
-python bench/eval_runner.py --check-staleness        # check if eval ground-truth is stale
-ANTHROPIC_API_KEY=<key> python bench/eval_runner.py  # full eval (slow, uses Haiku Batch judge)
-python bench/eval_report.py                          # report from latest bench/eval_results/
+python3 -m pytest abracabando/tests -q                          # unit tests (skill structure, manifests, dataset schema)
+claude plugin validate ./abracabando                             # validate plugin manifest
+python abracabando/bench/eval_runner.py --check-staleness        # check if eval ground-truth is stale
+ANTHROPIC_API_KEY=<key> python abracabando/bench/eval_runner.py  # full eval (slow, uses Haiku Batch judge)
+python abracabando/bench/eval_report.py                          # report from latest bench/eval_results/
 ```
 
-Run `pytest tests` after changes. The `bench/` eval harness is slow and API-key-gated — only run it when explicitly asked.
+Run `pytest abracabando/tests` after changes. The `bench/` eval harness is slow and API-key-gated — only run it when explicitly asked.
 
 ## Layout
 
-- `skills/<name>/SKILL.md` — one protocol per skill; `skills/shared/` holds common rules (`regole-comuni.md`, `strategia-strumenti.md`).
-- `bench/` — eval harness. 6 cases in `bench/dataset/eval_dataset.json`; 7 dimensions D1–D7 (D2 recall + D4 freshness are deterministic, the rest go to a Haiku Batch judge via `judge_prompt_v1.md`); ground-truth labeller in `bench/ground-truth/`.
-- `plugin.json` / `.claude-plugin/marketplace.json` — manifests (kept in sync; `test_manifests.py` validates them).
+```
+/                              ← repo root = marketplace
+├── .claude-plugin/
+│   └── marketplace.json       ← marketplace catalog (points to ./abracabando)
+├── README.md                  ← marketplace README (install instructions)
+├── LICENSE
+└── abracabando/               ← plugin root
+    ├── .claude-plugin/
+    │   └── plugin.json        ← plugin manifest
+    ├── plugin.json            ← root-level manifest (validated by test suite)
+    ├── .mcp.json              ← MCP server declarations
+    ├── skills/<name>/SKILL.md ← 7 skill protocols; skills/shared/ holds common rules
+    ├── bench/                 ← eval harness (6 cases, 7 dimensions D1–D7)
+    └── tests/                 ← unit tests (manifests, skill structure, dataset schema)
+```
 
 ## Gotchas
 
