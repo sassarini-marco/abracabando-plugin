@@ -2,8 +2,16 @@
 
 ---
 
-## [0.1.0] — 2026-06-05
+## [Unreleased]
 
+### Fixed
+
+- **`openpnrr_get` parameter name in skills** (`skills/reconciliation-pnrr/SKILL.md`, `skills/scheda-opportunita/SKILL.md`): both skills were calling `openpnrr_get(endpoint="progetti", id="<cup>")` but the MCP tool parameter is named `item_id`, not `id`. Calls with the wrong name cause a FastMCP validation error at runtime. Fixed to `item_id="<cup>"`.
+
+---
+
+## [0.1.0] — 2026-06-05
+also 
 ### Nuova skill
 
 **`/analisi-disciplinare`** — skill di punta del plugin.
