@@ -70,7 +70,7 @@ Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
    - Se errore (400, 500, timeout): documenta in `## Dati non disponibili` ed emetti scheda con dati disponibili.
 
 3. **OpenPNRR** (CONDIZIONALE — esegui se `cup` disponibile o se CPV/settore tipicamente PNRR):
-   - `openpnrr_list(endpoint="progetti")` oppure `openpnrr_get(endpoint="progetti", id="<cup>")`
+   - `openpnrr_list(endpoint="progetti")` oppure `openpnrr_get(endpoint="progetti", item_id="<cup>")`
    - Se zero risultati: documenta in `## Dati non disponibili`.
 
 4. **OpenCoesione** (CONDIZIONALE — esegui se CUP disponibile o se ciclo 2021-2027):

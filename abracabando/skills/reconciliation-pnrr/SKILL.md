@@ -67,7 +67,7 @@ Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
 ### Sequenza di interrogazione
 
 1. **OpenPNRR** (OBBLIGATORIO):
-   - Per un CUP specifico: `openpnrr_get(endpoint="progetti", id="<cup>")`
+   - Per un CUP specifico: `openpnrr_get(endpoint="progetti", item_id="<cup>")`
    - Per una misura PNRR: `openpnrr_list(endpoint="misure")`
    - Ricava: stato progetto, titolo, ente beneficiario.
 
