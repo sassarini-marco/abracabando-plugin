@@ -1,5 +1,15 @@
 {
   "case_id": "3.4-001",
-  "records": [],
-  "empty_reason": "Golden da catturare dopo verifica manuale — multi-source (OpenPNRR+programmazione+TED)"
+  "records": [
+    {
+      "source": "ted",
+      "record_id": "375897-2025"
+    },
+    {
+      "source": "ted",
+      "record_id": "380487-2025",
+      "cpv": "72200000"
+    }
+  ],
+  "empty_reason": null
 }

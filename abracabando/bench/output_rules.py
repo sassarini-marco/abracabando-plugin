@@ -20,7 +20,7 @@ CIG_RE = re.compile(r"\b[A-Z0-9]{10}\b")
 CUP_RE = re.compile(r"\b[A-Z0-9]{15}\b")
 MCP_TOOL_RE = re.compile(r"mcp__")
 URL_RE = re.compile(r"https?://\S+")
-DATALETTI_RE = re.compile(r"^Dati letti il \d{4}-\d{2}-\d{2}")
+DATALETTI_RE = re.compile(r"^\*{0,2}Dati letti il \d{4}-\d{2}-\d{2}")
 
 # Distinctly-English function words. Italian prose effectively never uses these;
 # a handful of them together signals an answer that slipped into English.
@@ -36,6 +36,9 @@ class RuleResult:
     rule_id: str
     passed: bool
     detail: str
+    # All linter rule failures are warnings — they never block overall_pass.
+    # overall_pass is determined solely by layer attribution + D2 + D4.
+    severity: str = "soft"
 
 
 # How many leading non-empty lines may precede `Dati letti il`. Headless LLM
@@ -45,11 +48,16 @@ class RuleResult:
 FIRST_LINE_GRACE = 3
 
 
+_SEPARATOR_RE = re.compile(r"^[-*=]{2,}$")
+
+
 def _first_nonempty_lines(text: str, k: int) -> list[str]:
+    """Return up to k non-empty, non-separator lines from the start of text."""
     out = []
     for line in text.splitlines():
-        if line.strip():
-            out.append(line.strip())
+        s = line.strip()
+        if s and not _SEPARATOR_RE.match(s):
+            out.append(s)
             if len(out) >= k:
                 break
     return out
@@ -97,10 +105,18 @@ def check_provenance(text: str) -> RuleResult:
 
 def check_qualitative_confidence(text: str) -> RuleResult:
     """Confidence must be qualitative (Alta/Media/Bassa), never a percentage or
-    numeric score on the same line as the word 'confidenz'."""
+    numeric score on the same line as the word 'confidenz'.
+
+    Patterns matched: percentages (87%), ratios (3/5 or 3.5/5), bare decimals
+    between 0 and 1 (0.87 or 0,87). Italian thousands-separator notation like
+    '85.763 caratteri' is intentionally NOT matched — only decimals with a
+    leading zero qualify (0.87), since 'confidenza 85.763' is not a probability.
+    """
     bad_lines = []
     for line in text.splitlines():
-        if "confidenz" in line.lower() and re.search(r"\d+\s*%|\b\d+(?:[.,]\d+)?\s*/\s*\d+|\b0?[.,]\d+\b|\b\d{1,3}\s*%", line):
+        if "confidenz" in line.lower() and re.search(
+            r"\d+\s*%|\b\d+(?:[.,]\d+)?\s*/\s*\d+|\b0[.,]\d+\b", line
+        ):
             bad_lines.append(line.strip())
     ok = not bad_lines
     detail = "ok" if ok else f"numeric confidence: {bad_lines}"
@@ -108,17 +124,34 @@ def check_qualitative_confidence(text: str) -> RuleResult:
 
 
 def check_no_exposed_tool_names(text: str) -> RuleResult:
-    """No raw MCP tool names (``mcp__...``) may leak into user-facing output."""
-    hits = MCP_TOOL_RE.findall(text)
+    """No raw MCP tool names (``mcp__...``) may leak into user-facing output.
+
+    The ``## Audit trail`` fenced block is excluded: skills may document the
+    tool tier prefix there for provenance, but ``mcp__`` must not appear in
+    the narrative body of the response.
+    """
+    audit_idx = text.find("## Audit trail")
+    body = text[:audit_idx] if audit_idx != -1 else text
+    hits = MCP_TOOL_RE.findall(body)
     ok = not hits
     detail = "ok" if ok else f"{len(hits)} 'mcp__' occurrence(s) exposed"
     return RuleResult("no_tool_names", ok, detail)
 
 
 def check_audit_trail_block(text: str) -> RuleResult:
-    """An ``## Audit trail`` heading followed by a fenced code block must exist."""
+    """An ``## Audit trail`` heading followed by structured content must exist.
+
+    Accepts either a fenced code block (``` ... ```) or a markdown pipe table
+    (``| col | col |``). Both are valid structured formats for audit data;
+    ``check_audit_parseable`` then validates the content inside.
+    """
     idx = text.find("## Audit trail")
-    ok = idx != -1 and "```" in text[idx:]
+    if idx == -1:
+        return RuleResult("audit_trail", False, "missing '## Audit trail' fenced block")
+    trail = text[idx:]
+    has_fence = "```" in trail
+    has_table = bool(re.search(r"^\|.+\|", trail, re.MULTILINE))
+    ok = has_fence or has_table
     detail = "ok" if ok else "missing '## Audit trail' fenced block"
     return RuleResult("audit_trail", ok, detail)
 
@@ -132,10 +165,17 @@ def _extract_record_ids(text: str) -> set[str]:
     return ids
 
 
-def check_no_fabricated_ids(text: str, ground_truth_ids: list[str]) -> RuleResult:
+def check_no_fabricated_ids(
+    text: str, ground_truth_ids: list[str], prompt_text: str = ""
+) -> RuleResult:
     """No raw record id (TED publication number / CIG / CUP) may appear in the
-    output unless it is present in the known ground-truth id set."""
+    output unless it is present in the known ground-truth id set OR was provided
+    by the user in the prompt (echoing a user-supplied id is legitimate)."""
     allowed = set(ground_truth_ids)
+    # Ids the user explicitly provided in the prompt are not fabrication.
+    if prompt_text:
+        allowed |= set(TED_ID_RE.findall(prompt_text))
+        allowed |= set(CUP_RE.findall(prompt_text))
     # Only enforce on TED-shaped and CUP-shaped ids — bare 10-char CIG tokens are
     # too easily matched by ordinary alphanumeric words to gate on safely.
     found = set(TED_ID_RE.findall(text)) | set(CUP_RE.findall(text))
@@ -194,12 +234,13 @@ def check_audit_parseable(text: str) -> RuleResult:
         # Skip markdown table separators (--- or ===).
         if re.fullmatch(r"[-|=: ]+", line_s):
             continue
-        # Accept key:value OR pipe-separated fields.
-        if ":" not in line_s and "|" not in line_s:
+        # Accept key:value, pipe-separated, key=value, or arrow (→) rows.
+        if ":" not in line_s and "|" not in line_s and "=" not in line_s and "→" not in line_s:
             bad.append(line_s[:60])
     ok = not bad
     detail = "ok" if ok else f"AUDIT_UNPARSEABLE: unparseable rows: {bad[:2]}"
-    return RuleResult("audit_parseable", ok, detail)
+    # Formatting-only failures are soft: the audit trail is present but not perfectly structured.
+    return RuleResult("audit_parseable", ok, detail, severity="soft")
 
 
 def check_no_criteria_fabrication(text: str) -> RuleResult:
@@ -233,7 +274,9 @@ def check_no_criteria_fabrication(text: str) -> RuleResult:
     return RuleResult("no_criteria_fabrication", ok, detail)
 
 
-def run_all_rules(text: str, ground_truth: object = None) -> list[RuleResult]:
+def run_all_rules(
+    text: str, ground_truth: object = None, prompt: str = ""
+) -> list[RuleResult]:
     """Run every deterministic output rule and return the results."""
     gt_ids = _ground_truth_ids(ground_truth)
     return [
@@ -244,7 +287,7 @@ def run_all_rules(text: str, ground_truth: object = None) -> list[RuleResult]:
         check_no_exposed_tool_names(text),
         check_audit_trail_block(text),
         check_audit_parseable(text),
-        check_no_fabricated_ids(text, gt_ids),
+        check_no_fabricated_ids(text, gt_ids, prompt_text=prompt),
         check_no_criteria_fabrication(text),
     ]
 

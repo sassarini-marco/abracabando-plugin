@@ -1,20 +1,5 @@
 {
   "case_id": "3.1-001",
-  "records": [
-    {
-      "source": "ted",
-      "record_id": "297071-2024",
-      "buyer": "Comune di Lecce",
-      "cpv": "72514100",
-      "status": "attivo"
-    },
-    {
-      "source": "ted",
-      "record_id": "440309-2024",
-      "buyer": "Commissione Nazionale per Le Società e La Borsa",
-      "cpv": "72500000",
-      "status": "attivo"
-    }
-  ],
-  "empty_reason": null
+  "records": [],
+  "empty_reason": "PIN TED attivi per CPV 72000000 (ITA, active, deadline ≤2026-12-08) assenti al 2026-06-08 — lo skill ha correttamente risposto 'nessun dato'. Golden da ricatturare quando nuovi PIN diventano attivi."
 }

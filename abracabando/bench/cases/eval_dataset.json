@@ -16,22 +16,7 @@
       "snapshot_date": "2026-06-04",
       "frozen_date": "2026-06-04",
       "ttl_days": 90,
-      "ground_truth_records": [
-        {
-          "source": "ted",
-          "record_id": "297071-2024",
-          "buyer": "Comune di Lecce",
-          "cpv": "72514100",
-          "status": "attivo"
-        },
-        {
-          "source": "ted",
-          "record_id": "440309-2024",
-          "buyer": "Commissione Nazionale per Le Società e La Borsa",
-          "cpv": "72500000",
-          "status": "attivo"
-        }
-      ],
+      "ground_truth_records": [],
       "empty_reason": null,
       "rubrics": {
         "D1": "judge",
@@ -86,7 +71,20 @@
       "snapshot_date": "2026-06-04",
       "frozen_date": "2026-06-04",
       "ttl_days": 90,
-      "ground_truth_records": [],
+      "ground_truth_records": [
+        {
+          "source": "ted",
+          "record_id": "869066-2025",
+          "buyer": "SNAM S.P.A.",
+          "cpv": "71300000"
+        },
+        {
+          "source": "ted",
+          "record_id": "80912-2026",
+          "buyer": "ACI Informatica",
+          "cpv": "72500000"
+        }
+      ],
       "empty_reason": "edge-case: CPV+regione molto specifici, risultati possibilmente zero o pochi",
       "rubrics": {
         "D1": "judge",
@@ -152,7 +150,16 @@
       "snapshot_date": "2026-06-02",
       "frozen_date": "2026-06-02",
       "ttl_days": 60,
-      "ground_truth_records": [],
+      "ground_truth_records": [
+        {
+          "source": "consip",
+          "record_id": "https://www.consip.it/bandi/rda-51756"
+        },
+        {
+          "source": "consip",
+          "record_id": "https://www.consip.it/bandi/rda-51997"
+        }
+      ],
       "empty_reason": "Nessuna consultazione/avviso esplorativo Consip aperto per la categoria richiesta — scenario missing-data.",
       "rubrics": {
         "D1": "judge",
@@ -214,15 +221,7 @@
       "snapshot_date": "2026-06-02",
       "frozen_date": "2026-06-02",
       "ttl_days": 90,
-      "ground_truth_records": [
-        {
-          "source": "ted",
-          "record_id": "338240-2026",
-          "buyer": "Azienda Zero",
-          "cpv": "72253000",
-          "note": "PIN TED attivo incrociato con storico ANAC CPV 72 della SA"
-        }
-      ],
+      "ground_truth_records": [],
       "empty_reason": null,
       "rubrics": {
         "D1": "judge",
@@ -256,7 +255,18 @@
       "snapshot_date": "2026-06-02",
       "frozen_date": "2026-06-02",
       "ttl_days": 90,
-      "ground_truth_records": [],
+      "ground_truth_records": [
+        {
+          "source": "ted",
+          "record_id": "391794-2025"
+        },
+        {
+          "source": "ted",
+          "record_id": "297071-2024",
+          "buyer": "Comune di Lecce",
+          "cpv": "72514100"
+        }
+      ],
       "empty_reason": "Nessun PIN TED attivo con storico ANAC coerente per la SA richiesta — scenario missing-data.",
       "rubrics": {
         "D1": "judge",
@@ -289,15 +299,7 @@
       "snapshot_date": "2026-06-02",
       "frozen_date": "2026-06-02",
       "ttl_days": 90,
-      "ground_truth_records": [
-        {
-          "source": "ted",
-          "record_id": "340106-2026",
-          "buyer": "CSI Piemonte",
-          "cpv": "72210000",
-          "note": "Edge: PIN attivo ma storico ANAC scarno (poche aggiudicazioni)"
-        }
-      ],
+      "ground_truth_records": [],
       "empty_reason": null,
       "rubrics": {
         "D1": "judge",

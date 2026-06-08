@@ -3,10 +3,14 @@
   "records": [
     {
       "source": "ted",
-      "record_id": "338240-2026",
+      "record_id": "380487-2025",
       "buyer": "Azienda Zero",
-      "cpv": "72253000",
-      "note": "PIN TED attivo incrociato con storico ANAC CPV 72 della SA"
+      "cpv": "72200000"
+    },
+    {
+      "source": "ted",
+      "record_id": "507425-2025",
+      "cpv": "72500000"
     }
   ],
   "empty_reason": null

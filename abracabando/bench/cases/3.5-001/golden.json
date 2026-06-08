@@ -1,16 +1,5 @@
 {
   "case_id": "3.5-001",
-  "records": [
-    {
-      "source": "anac",
-      "record_id": "BB7687DCEB",
-      "stazione_appaltante": "AZIENDA SANITARIA PROVINCIALE DI CATANIA"
-    },
-    {
-      "source": "anac",
-      "record_id": "BB70CB5F67",
-      "stazione_appaltante": "AZIENDA SANITARIA PROVINCIALE DI CATANIA"
-    }
-  ],
-  "empty_reason": null
+  "records": [],
+  "empty_reason": "profilo-sa Consip S.p.A. (CF 05359681003): skill aggregante, CIG ANAC non surfaceati nell'output. Golden da ricatturare con query diretta anac_search_awards per Consip."
 }

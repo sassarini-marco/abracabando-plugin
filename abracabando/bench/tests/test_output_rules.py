@@ -92,3 +92,111 @@ def test_no_fabricated_ids_flags_unknown_ted_number():
 
 def test_audit_trail_requires_fenced_block():
     assert check_audit_trail_block("## Audit trail\nnessun blocco").passed is False
+
+
+def test_audit_trail_accepts_pipe_table():
+    txt = (
+        "Dati letti il 2026-06-08\n\n## Audit trail\n\n"
+        "| Tool | Query | Risultati |\n"
+        "|------|-------|-----------|\n"
+        "| ted_pin_italy | cpv=72 | 3 |\n"
+    )
+    assert check_audit_trail_block(txt).passed is True
+
+
+def test_first_line_skips_separators():
+    # '---' separators do not count toward the grace window
+    txt = "Messaggio introduttivo.\n---\nDati letti il 2026-06-08\n# Titolo"
+    from output_rules import check_first_line_dataletti
+    assert check_first_line_dataletti(txt).passed is True
+
+
+def test_first_line_accepts_bolded_dataletti():
+    txt = "**Dati letti il 2026-06-08**\n# Titolo"
+    from output_rules import check_first_line_dataletti
+    assert check_first_line_dataletti(txt).passed is True
+
+
+def test_no_tool_names_exempt_audit_trail():
+    """mcp__ in the audit trail block should not be flagged."""
+    txt = (
+        "Dati letti il 2026-06-08\n## Risposta\nTesto normale.\n"
+        "## Audit trail\n```\nmcp__industrial-mcp-free__ted_search → 3 risultati\n```\n"
+    )
+    assert check_no_exposed_tool_names(txt).passed is True
+
+
+def test_no_tool_names_flags_body_exposure():
+    """mcp__ in the narrative body (before audit trail) is always a violation."""
+    txt = (
+        "Dati letti il 2026-06-08\n"
+        "Ho chiamato mcp__industrial-mcp-free__ted_search e trovato risultati.\n"
+        "## Audit trail\n```\nted_search → 3\n```\n"
+    )
+    assert check_no_exposed_tool_names(txt).passed is False
+
+
+def test_qualitative_confidence_no_false_positive_on_thousands_sep():
+    """Italian thousands-separator notation (85.763 caratteri) must not be flagged."""
+    txt = (
+        "Dati letti il 2026-06-08\n"
+        "**Alta confidenza** — documento letto integralmente (29 pagine, 85.763 caratteri).\n"
+    )
+    from output_rules import check_qualitative_confidence
+    assert check_qualitative_confidence(txt).passed is True
+
+
+def test_qualitative_confidence_still_catches_decimal_probability():
+    txt = "Dati letti il 2026-06-08\nConfidenza: 0.87 di successo."
+    from output_rules import check_qualitative_confidence
+    assert check_qualitative_confidence(txt).passed is False
+
+
+def test_audit_parseable_accepts_arrow_and_equals_rows():
+    txt = (
+        "Dati letti il 2026-06-02\n\n## Audit trail\n"
+        "```\n"
+        "tool_preferito: free\n"
+        "ted_search(query=\"cpv=72000000\") → 3 risultati\n"
+        "fallback_attivato=no\n"
+        "data_lettura: 2026-06-02\n"
+        "```\n"
+    )
+    from output_rules import check_audit_parseable
+    result = check_audit_parseable(txt)
+    assert result.passed is True, result.detail
+
+
+def test_audit_parseable_is_soft_severity():
+    """Formatting failures in the audit block are soft warnings, not hard failures."""
+    txt_bad_format = (
+        "Dati letti il 2026-06-02\n\n## Audit trail\n"
+        "```\ncall executed without structure here\n```\n"
+    )
+    from output_rules import check_audit_parseable
+    result = check_audit_parseable(txt_bad_format)
+    assert result.passed is False
+    assert result.severity == "soft"
+
+
+def test_no_fabricated_ids_allows_prompt_ids():
+    """A CUP provided by the user in the prompt must not be flagged as fabricated."""
+    txt = "Dati letti il 2026-06-02\nCUP F99J22001320007 non trovato in OpenPNRR."
+    # Without prompt context, the CUP looks fabricated (not in ground_truth_ids).
+    assert check_no_fabricated_ids(txt, []).passed is False
+    # With the prompt supplying the CUP, it's legitimate to echo it.
+    prompt = "/reconciliation-pnrr Riconcilia il CUP F99J22001320007"
+    assert check_no_fabricated_ids(txt, [], prompt_text=prompt).passed is True
+
+
+def test_run_all_rules_passes_prompt_to_fabrication_check():
+    prompt = "/reconciliation-pnrr CUP F99J22001320007"
+    txt = "Dati letti il 2026-06-02\nCUP F99J22001320007 non trovato.\n## Audit trail\n```\ntool: free\n```\n"
+    rules = {r.rule_id: r for r in run_all_rules(txt, [], prompt=prompt)}
+    assert rules["no_fabricated_ids"].passed is True
+
+
+def test_severity_field_present_on_all_rules():
+    """Every RuleResult must have severity 'soft' — all linter rules are warnings."""
+    for r in run_all_rules(GOOD_ANSWER, GROUND_TRUTH):
+        assert r.severity == "soft", f"{r.rule_id} has unexpected severity {r.severity!r}"

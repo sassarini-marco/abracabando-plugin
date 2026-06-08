@@ -41,8 +41,23 @@ def test_attribute_layer_separates_mcp_from_skill_failures():
 
 def test_attribute_layer_happy_and_stale():
     assert attribute_layer(ANSWER_BOTH, GOLDEN, GOLDEN) == "skill_ok"
-    # golden empty but MCP surfaced records the oracle lacks -> stale golden
+    # golden empty, MCP has records, NOT a placeholder → genuine content drift
     assert attribute_layer(ANSWER_BOTH, GOLDEN, []) == "stale_ground_truth"
+
+
+def test_attribute_layer_golden_missing():
+    # Placeholder golden (empty_reason set, records=[]) → fixture debt, not drift
+    assert attribute_layer(ANSWER_BOTH, GOLDEN, [], golden_is_placeholder=True) == "golden_missing"
+    # Placeholder but MCP also empty → skill correctly reports no data
+    assert attribute_layer(NO_DATA_ANSWER, [], [], golden_is_placeholder=True) == "skill_ok_no_data"
+
+
+def test_attribute_layer_aggregating_skill():
+    # Aggregating skill: MCP agrees with golden but answer doesn't echo raw ids.
+    # For a list skill this would be skill_layer_bug; for aggregating it's skill_ok.
+    answer_no_ids = "Dati letti il 2026-06-02\n## Riepilogo\nTotale appalti: 42"
+    assert attribute_layer(answer_no_ids, GOLDEN, GOLDEN, is_aggregating=False) == "skill_layer_bug"
+    assert attribute_layer(answer_no_ids, GOLDEN, GOLDEN, is_aggregating=True) == "skill_ok"
 
 
 def test_assert_mcp_nonempty_raises_on_empty():

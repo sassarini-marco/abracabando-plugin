@@ -3,10 +3,12 @@
   "records": [
     {
       "source": "ted",
-      "record_id": "340106-2026",
-      "buyer": "CSI Piemonte",
-      "cpv": "72210000",
-      "note": "Edge: PIN attivo ma storico ANAC scarno (poche aggiudicazioni)"
+      "record_id": "507425-2025",
+      "cpv": "72500000"
+    },
+    {
+      "source": "ted",
+      "record_id": "569211-2025"
     }
   ],
   "empty_reason": null

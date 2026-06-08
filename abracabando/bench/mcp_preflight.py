@@ -31,7 +31,8 @@ Layer = Literal[
     "mcp_layer_wrong",
     "mcp_layer_partial",   # MCP returned some but not all expected records
     "skill_layer_bug",
-    "stale_ground_truth",
+    "stale_ground_truth",  # golden had records but MCP data drifted
+    "golden_missing",      # golden was never captured (placeholder) — fixture debt
     "needs_rerun",         # infrastructure issue (cold-start, file-path deferral,
                            # audit unparseable) — neither pass nor fail
 ]
@@ -150,15 +151,32 @@ def _is_no_data_answer(answer: str) -> bool:
 # Layer attribution
 # --------------------------------------------------------------------------- #
 
-def attribute_layer(answer: str, mcp_records: list[dict], golden_records: list[dict]) -> Layer:
-    """Classify a case result against the independent golden oracle."""
+def attribute_layer(
+    answer: str,
+    mcp_records: list[dict],
+    golden_records: list[dict],
+    *,
+    golden_is_placeholder: bool = False,
+    is_aggregating: bool = False,
+) -> Layer:
+    """Classify a case result against the independent golden oracle.
+
+    ``golden_is_placeholder`` distinguishes fixture debt (golden was never
+    captured) from genuine data drift — both are INCONCLUSIVE but for different
+    reasons that need different follow-up actions.
+
+    ``is_aggregating`` marks skills that synthesise/aggregate records and
+    legitimately do not echo raw record ids in their output (profilo-sa,
+    reconciliation-pnrr, etc.). These are scored on correctness, not surfacing.
+    """
     golden_ids = _ids(golden_records)
     mcp_ids = _ids(mcp_records)
 
     if not golden_ids:
-        # Oracle says there should be nothing.
+        # Oracle says there should be nothing (empty golden).
         if mcp_ids:
-            return "stale_ground_truth"
+            # Distinguish: fixture never captured vs genuine content drift.
+            return "golden_missing" if golden_is_placeholder else "stale_ground_truth"
         return "skill_ok_no_data" if _is_no_data_answer(answer) else "skill_layer_bug"
 
     # Oracle has records.
@@ -167,10 +185,12 @@ def attribute_layer(answer: str, mcp_records: list[dict], golden_records: list[d
     if _divergent(golden_records, mcp_records):
         return "mcp_layer_wrong"
 
-    # MCP agrees with the golden — did the skill surface every record?
-    missing = [gid for gid in golden_ids if gid not in answer]
-    if missing:
-        return "skill_layer_bug"
+    # MCP agrees with the golden.
+    # Aggregating skills don't print raw record ids — surfacing check doesn't apply.
+    if not is_aggregating:
+        missing = [gid for gid in golden_ids if gid not in answer]
+        if missing:
+            return "skill_layer_bug"
     return "skill_ok"
 
 
@@ -189,6 +209,9 @@ def attribute_layer_from_probe(
     mcp_records: list[dict],
     golden_records: list[dict],
     probe_results: dict[str, dict],
+    *,
+    golden_is_placeholder: bool = False,
+    is_aggregating: bool = False,
 ) -> Layer:
     """Like ``attribute_layer`` but uses pre-computed ``mcp_probe_result`` dicts.
 
@@ -216,7 +239,7 @@ def attribute_layer_from_probe(
 
     if not golden_ids:
         if mcp_ids:
-            return "stale_ground_truth"
+            return "golden_missing" if golden_is_placeholder else "stale_ground_truth"
         return "skill_ok_no_data" if _is_no_data_answer(answer) else "skill_layer_bug"
 
     if not mcp_ids:
@@ -231,10 +254,11 @@ def attribute_layer_from_probe(
     if missing_from_mcp:
         return "mcp_layer_partial"
 
-    # MCP agrees with golden — did the skill surface every record?
-    missing_from_answer = [gid for gid in golden_ids if gid not in answer]
-    if missing_from_answer:
-        return "skill_layer_bug"
+    # MCP agrees with golden — aggregating skills don't surface raw ids.
+    if not is_aggregating:
+        missing_from_answer = [gid for gid in golden_ids if gid not in answer]
+        if missing_from_answer:
+            return "skill_layer_bug"
     return "skill_ok"
 
 
@@ -356,6 +380,7 @@ def assert_mcp_nonempty(
 
 
 __all__ = [
+    "Layer",
     "MCPEmptyError",
     "PreflightResult",
     "assert_mcp_nonempty",

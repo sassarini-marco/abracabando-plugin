@@ -1,5 +1,16 @@
 {
   "case_id": "3.3-002",
-  "records": [],
-  "empty_reason": "Golden da catturare dopo verifica manuale — multi-source (ANAC+TED+OpenCoesione)"
+  "records": [
+    {
+      "source": "ted",
+      "record_id": "391794-2025"
+    },
+    {
+      "source": "ted",
+      "record_id": "297071-2024",
+      "buyer": "Comune di Lecce",
+      "cpv": "72514100"
+    }
+  ],
+  "empty_reason": null
 }

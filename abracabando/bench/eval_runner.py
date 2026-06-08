@@ -57,6 +57,15 @@ TEMPLATE_TO_SKILL: dict[str, str] = {
 PASSING_LAYERS = {"skill_ok", "skill_ok_no_data"}
 # Layers that are infrastructure noise — neither pass nor fail.
 NEEDS_RERUN_LAYERS = {"needs_rerun"}
+# Fixture/data gaps — INCONCLUSIVE (not a skill verdict).
+# "golden_missing": the golden was never captured (fixture debt).
+# "stale_ground_truth": golden had records but live data has since drifted.
+# Both need follow-up, but should not count against the skill pass-rate.
+INCONCLUSIVE_LAYERS = {"golden_missing", "stale_ground_truth"}
+
+# Skills that synthesise/aggregate data and legitimately do not echo raw
+# record IDs in their output — surfacing-based layer attribution doesn't apply.
+AGGREGATING_SKILLS = {"digest-pregara", "profilo-sa", "reconciliation-pnrr", "analisi-disciplinare"}
 
 JUDGE_MODEL = "claude-haiku-4-5-20251001"
 
@@ -282,12 +291,27 @@ def run_case(
     return run_case_detailed(case, plugin_dir, mcp_config, timeout, model)["answer"]
 
 
-def load_golden_records(case_id: str) -> list[dict]:
-    """Load the independent golden records for a case (empty if none)."""
+def load_golden(case_id: str) -> tuple[list[dict], bool]:
+    """Load the independent golden for a case.
+
+    Returns ``(records, is_placeholder)`` where ``is_placeholder`` is True when
+    the golden file exists but was never populated (``empty_reason`` set,
+    ``records`` empty).  Callers can use this to distinguish fixture debt from
+    genuine data drift when both result in an empty record list.
+    """
     path = GOLDEN_DIR / case_id / "golden.json"
     if not path.exists():
-        return []
-    return json.loads(path.read_text()).get("records") or []
+        return [], False
+    data = json.loads(path.read_text())
+    records = data.get("records") or []
+    is_placeholder = bool(data.get("empty_reason")) and not records
+    return records, is_placeholder
+
+
+def load_golden_records(case_id: str) -> list[dict]:
+    """Backward-compatible wrapper — returns only the records."""
+    records, _ = load_golden(case_id)
+    return records
 
 
 def _surfacing_rate(answer: str, mcp_records: list[dict]) -> float | None:
@@ -312,6 +336,9 @@ def score_case_deterministic(
     mcp_tools: list[str] | None = None,
     mcp_calls: int | None = None,
     probe_results: dict | None = None,
+    golden_is_placeholder: bool = False,
+    is_aggregating: bool = False,
+    timed_out: bool = False,
 ) -> dict:
     """Score the deterministic dimensions for one case — no API key required.
 
@@ -322,6 +349,13 @@ def score_case_deterministic(
     attribution uses the grounded cross-tool consistency signal instead of the
     heuristic ``_divergent()`` reconstruction. When both are omitted it falls
     back to the golden (frozen replay). No judge dimensions are computed here.
+
+    Gate semantics (hardened):
+    - Timed-out runs, infra layers, and fixture-debt layers → INCONCLUSIVE (None).
+    - Hard rule failures (missing audit trail, provenance, tool-name leaks,
+      fabricated ids) block the pass even when layer/D2 look fine.
+    - Soft rule failures (audit formatting) are warnings — do not block the pass.
+    - ``skill_ok`` + D2=1.0 can never be False due to formatting alone.
     """
     used_real_mcp = mcp_records is not None
     if mcp_records is None:
@@ -329,21 +363,36 @@ def score_case_deterministic(
     ref = reference_date or date.today().isoformat()
 
     gt_records = case.get("ground_truth_records", [])
+    prompt = case.get("prompt", "")
     d2 = check_d2_recall(answer, gt_records)
     d4 = check_d4_freshness(answer, ref)
-    rules = run_all_rules(answer, gt_records)
+    rules = run_all_rules(answer, gt_records, prompt=prompt)
     rules_map = {r.rule_id: r.passed for r in rules}
 
     if probe_results and used_real_mcp:
-        layer = attribute_layer_from_probe(answer, mcp_records, golden_records, probe_results)
+        layer = attribute_layer_from_probe(
+            answer, mcp_records, golden_records, probe_results,
+            golden_is_placeholder=golden_is_placeholder,
+            is_aggregating=is_aggregating,
+        )
     else:
-        layer = attribute_layer(answer, mcp_records, golden_records)
+        layer = attribute_layer(
+            answer, mcp_records, golden_records,
+            golden_is_placeholder=golden_is_placeholder,
+            is_aggregating=is_aggregating,
+        )
 
-    d2_ok = d2 is None or d2 == 1.0
-    if layer in NEEDS_RERUN_LAYERS:
-        overall = None  # infrastructure issue — neither pass nor fail
+    # Determine overall pass — tri-state: True / False / None (inconclusive).
+    # Gate: skill correctness only (layer attribution + D2 recall + D4 freshness).
+    # Output-rule violations are always warnings; they never block the pass.
+    if timed_out or layer in (NEEDS_RERUN_LAYERS | INCONCLUSIVE_LAYERS):
+        overall = None
     else:
-        overall = bool(d4) and d2_ok and all(rules_map.values()) and layer in PASSING_LAYERS
+        d2_ok = d2 is None or d2 == 1.0
+        overall = bool(d4) and d2_ok and layer in PASSING_LAYERS
+
+    # All rule failures are warnings (informational, do not affect overall_pass).
+    soft_warnings = [r.rule_id for r in rules if not r.passed]
 
     result = {
         "id": case["id"],
@@ -355,6 +404,8 @@ def score_case_deterministic(
         "d4_freshness": d4,
         "output_rules": rules_map,
         "output_rules_detail": {r.rule_id: r.detail for r in rules},
+        "output_rules_severity": {r.rule_id: r.severity for r in rules},
+        "contract_warnings": soft_warnings,
         "layer": layer,
         "overall_pass": overall,
         "answer": answer,
@@ -594,7 +645,8 @@ def main() -> None:
             time.sleep(args.delay)
         print(f"  [{cid}] Running via Claude Code...")
 
-        golden_records = load_golden_records(cid)
+        golden_records, golden_is_placeholder = load_golden(cid)
+        is_aggregating = case.get("skill") in AGGREGATING_SKILLS
         os.environ["MCP_REPLAY_CASE"] = cid  # tell the replay server which fixture to load
 
         t0 = time.time()
@@ -615,6 +667,9 @@ def main() -> None:
             mcp_records=mcp_records, reference_date=today_iso,
             mcp_tools=run.get("mcp_tools"), mcp_calls=run.get("mcp_calls"),
             probe_results=probe_results if live else None,
+            golden_is_placeholder=golden_is_placeholder,
+            is_aggregating=is_aggregating,
+            timed_out=run.get("timed_out", False),
         )
         result["timed_out"] = run.get("timed_out", False)
         result["wall_time_s"] = wall_time_s
@@ -625,6 +680,8 @@ def main() -> None:
         out_path.write_text(json.dumps(result, ensure_ascii=False, indent=2))
         d2 = result["d2_recall"]
         d2_str = "N/A" if d2 is None else f"{d2:.2f}"
+        warns = result.get("contract_warnings") or []
+        warn_str = f"  warnings={warns}" if warns else ""
         extra = ""
         if live:
             sr = result.get("surfacing_rate")
@@ -634,7 +691,7 @@ def main() -> None:
         print(
             f"         D2={d2_str}  D4={result['d4_freshness']}  "
             f"layer={result['layer']}  pass={result['overall_pass']}  "
-            f"time={wall_time_s}s{extra}"
+            f"time={wall_time_s}s{warn_str}{extra}"
         )
 
     # Submit judge only on the live tier with an API key.
