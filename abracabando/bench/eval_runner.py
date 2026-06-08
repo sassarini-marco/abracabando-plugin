@@ -238,7 +238,6 @@ def run_case_detailed(
         "--model", model,
         "--mcp-config", str(mcp_config), "--strict-mcp-config",
         "--allowedTools", "mcp__industrial-mcp-free__*",
-        "--disallowedTools", "Bash",
         "--output-format", "stream-json", "--verbose",
     ]
     timed_out = False
