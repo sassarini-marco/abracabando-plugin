@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Derive eval ground truth from the independent frozen golden.
 
-The golden under ``bench/ground-truth/golden/<case_id>/golden.json`` is the
+The golden under ``bench/cases/<case_id>/golden.json`` is the
 oracle: raw upstream responses are captured by ``capture_golden.py``,
 hand-verified once, and frozen. This module reads that committed, human-verified
 golden and produces the ``ground_truth_records`` block for a case.
@@ -17,7 +17,7 @@ import json
 import sys
 from pathlib import Path
 
-GOLDEN_DIR = Path(__file__).resolve().parent / "golden"
+GOLDEN_DIR = Path(__file__).resolve().parent.parent / "cases"
 
 
 def _load_golden(case_id: str, golden_dir: Path) -> dict:
@@ -25,7 +25,7 @@ def _load_golden(case_id: str, golden_dir: Path) -> dict:
     if not path.exists():
         raise FileNotFoundError(
             f"No golden for case {case_id!r} at {path}. "
-            f"Run: python3 bench/ground-truth/capture_golden.py --case {case_id}"
+            f"Run: python3 bench/scripts/capture_golden.py --case {case_id}"
         )
     return json.loads(path.read_text())
 

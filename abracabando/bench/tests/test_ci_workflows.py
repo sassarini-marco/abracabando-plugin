@@ -9,7 +9,7 @@ import pathlib
 
 import yaml
 
-WF = pathlib.Path(__file__).resolve().parent.parent.parent / ".github" / "workflows"
+WF = pathlib.Path(__file__).resolve().parent.parent.parent.parent / ".github" / "workflows"
 STATIC = WF / "eval-static.yml"
 
 

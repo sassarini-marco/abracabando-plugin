@@ -29,8 +29,11 @@ Layer = Literal[
     "skill_ok_no_data",
     "mcp_layer_empty",
     "mcp_layer_wrong",
+    "mcp_layer_partial",   # MCP returned some but not all expected records
     "skill_layer_bug",
     "stale_ground_truth",
+    "needs_rerun",         # infrastructure issue (cold-start, file-path deferral,
+                           # audit unparseable) — neither pass nor fail
 ]
 
 
@@ -172,6 +175,70 @@ def attribute_layer(answer: str, mcp_records: list[dict], golden_records: list[d
 
 
 # --------------------------------------------------------------------------- #
+# Probe-backed layer attribution
+# --------------------------------------------------------------------------- #
+
+# Probe statuses that indicate infrastructure noise rather than a semantic failure.
+_INFRA_PROBE_STATUSES = frozenset(
+    {"cold_start", "file_path_deferred", "audit_unparseable", "audit_drift", "needs_rerun"}
+)
+
+
+def attribute_layer_from_probe(
+    answer: str,
+    mcp_records: list[dict],
+    golden_records: list[dict],
+    probe_results: dict[str, dict],
+) -> Layer:
+    """Like ``attribute_layer`` but uses pre-computed ``mcp_probe_result`` dicts.
+
+    ``probe_results`` maps tool name → ``mcp_probe_result`` as written by
+    ``mcp_probe.run_probes()``.  This replaces the heuristic ``_divergent()``
+    reconstruction with the grounded cross-tool consistency signal from the
+    ANAC probe row.
+
+    Infrastructure statuses (cold-start, file-path deferral, etc.) from the
+    probe map to ``'needs_rerun'`` — neither a pass nor a failure.
+
+    Falls back to ``attribute_layer()`` when no probe result covers the
+    tools used in this case.
+    """
+    # Collect the probe status and divergent flag for tools used in this case.
+    # We look for the ANAC awards probe as the primary consistency signal.
+    probe = probe_results.get("anac_search_awards") or {}
+    probe_status = probe.get("status", "ok")
+
+    if probe_status in _INFRA_PROBE_STATUSES:
+        return "needs_rerun"
+
+    golden_ids = _ids(golden_records)
+    mcp_ids = _ids(mcp_records)
+
+    if not golden_ids:
+        if mcp_ids:
+            return "stale_ground_truth"
+        return "skill_ok_no_data" if _is_no_data_answer(answer) else "skill_layer_bug"
+
+    if not mcp_ids:
+        return "mcp_layer_empty"
+
+    # Use the grounded divergent signal from the probe instead of _divergent().
+    if probe.get("divergent"):
+        return "mcp_layer_wrong"
+
+    # Partial overlap: MCP returned some but not all golden records.
+    missing_from_mcp = golden_ids - mcp_ids
+    if missing_from_mcp:
+        return "mcp_layer_partial"
+
+    # MCP agrees with golden — did the skill surface every record?
+    missing_from_answer = [gid for gid in golden_ids if gid not in answer]
+    if missing_from_answer:
+        return "skill_layer_bug"
+    return "skill_ok"
+
+
+# --------------------------------------------------------------------------- #
 # Live MCP preflight
 # --------------------------------------------------------------------------- #
 
@@ -277,7 +344,7 @@ def assert_mcp_nonempty(
 ) -> PreflightResult:
     """Call ``tool`` and raise ``MCPEmptyError`` if it yields no records."""
     if call_tool is None:
-        cfg = mcp_config or (BENCH / "mcp.json")
+        cfg = mcp_config or (BENCH / "config" / "mcp_live.json")
         def call_tool(t: str, p: dict) -> object:  # noqa: E306
             return _default_call_tool(t, p, cfg)
 
@@ -293,6 +360,7 @@ __all__ = [
     "PreflightResult",
     "assert_mcp_nonempty",
     "attribute_layer",
+    "attribute_layer_from_probe",
     "extract_records",
     "record_identity",
 ]

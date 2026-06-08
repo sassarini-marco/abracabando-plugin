@@ -4,8 +4,8 @@ import pathlib
 import jsonschema
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-DATASET_PATH = ROOT / "bench" / "dataset" / "eval_dataset.json"
-SCHEMA_PATH = ROOT / "bench" / "dataset" / "eval_dataset_schema.json"
+DATASET_PATH = ROOT / "bench" / "cases" / "eval_dataset.json"
+SCHEMA_PATH = ROOT / "bench" / "cases" / "eval_dataset_schema.json"
 REFRESH_PATH = ROOT / "bench" / "REFRESH_PROCEDURE.md"
 
 def test_schema_is_valid_json_schema():
@@ -71,7 +71,7 @@ def test_judge_prompt_version_matches_dataset():
 def test_eval_dataset_not_gitignored():
     import subprocess
     result = subprocess.run(
-        ["git", "check-ignore", "-q", "bench/dataset/eval_dataset.json"],
+        ["git", "check-ignore", "-q", "bench/cases/eval_dataset.json"],
         cwd=ROOT, capture_output=True
     )
     assert result.returncode == 1, "bench/dataset/eval_dataset.json should NOT be gitignored"

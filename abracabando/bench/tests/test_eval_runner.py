@@ -2,7 +2,7 @@ import pathlib
 import sys
 from datetime import date, timedelta
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 import eval_runner  # noqa: E402
 from eval_report import build_report  # noqa: E402
 from eval_runner import check_d2_recall, check_d4_freshness  # noqa: E402
@@ -61,7 +61,7 @@ def test_eval_results_are_transient_and_well_formed():
     checkout) or populated by a run; whatever is present must be valid result
     JSON carrying at least an id and the deterministic dims."""
     import json
-    results_dir = pathlib.Path(__file__).resolve().parent / "eval_results"
+    results_dir = pathlib.Path(__file__).resolve().parent.parent / "eval_results"
     for f in results_dir.glob("*.json"):
         r = json.loads(f.read_text())
         assert "id" in r
@@ -158,7 +158,7 @@ def test_eval_report_no_zero_scores():
     import json
 
     import pytest
-    results_dir = pathlib.Path(__file__).resolve().parent / "eval_results"
+    results_dir = pathlib.Path(__file__).resolve().parent.parent / "eval_results"
     results = []
     for f in sorted(results_dir.glob("*.json")):
         with contextlib.suppress(Exception):

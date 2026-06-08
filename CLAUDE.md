@@ -20,14 +20,14 @@ These are enforced by `skills/shared/regole-comuni.md` and checked by the eval h
 ## Commands
 
 ```bash
-python3 -m pytest abracabando/tests -q                          # unit tests (skill structure, manifests, dataset schema)
-claude plugin validate ./abracabando                             # validate plugin manifest
-python abracabando/bench/eval_runner.py --check-staleness        # check if eval ground-truth is stale
-ANTHROPIC_API_KEY=<key> python abracabando/bench/eval_runner.py  # full eval (slow, uses Haiku Batch judge)
-python abracabando/bench/eval_report.py                          # report from latest bench/eval_results/
+python3 -m pytest abracabando/tests abracabando/bench/tests -q -m "not live"  # unit tests (offline, fast)
+claude plugin validate ./abracabando                                            # validate plugin manifest
+python abracabando/bench/eval_runner.py --check-staleness                      # check if eval ground-truth is stale
+ANTHROPIC_API_KEY=<key> python abracabando/bench/eval_runner.py                # full eval (slow, uses Haiku Batch judge)
+python abracabando/bench/eval_report.py                                        # report from latest bench/eval_results/
 ```
 
-Run `pytest abracabando/tests` after changes. The `bench/` eval harness is slow and API-key-gated — only run it when explicitly asked.
+Run `pytest abracabando/tests abracabando/bench/tests -q -m "not live"` after changes. The `bench/` eval harness is slow and API-key-gated — only run it when explicitly asked.
 
 ## Layout
 
@@ -43,7 +43,7 @@ Run `pytest abracabando/tests` after changes. The `bench/` eval harness is slow 
     ├── plugin.json            ← root-level manifest (validated by test suite)
     ├── .mcp.json              ← MCP server declarations
     ├── skills/<name>/SKILL.md ← 7 skill protocols; skills/shared/ holds common rules
-    ├── bench/                 ← eval harness (6 cases, 7 dimensions D1–D7)
+    ├── bench/                 ← eval harness (21 cases, 7 dimensions D1–D7; see bench/README.md)
     └── tests/                 ← unit tests (manifests, skill structure, dataset schema)
 ```
 

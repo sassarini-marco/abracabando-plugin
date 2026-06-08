@@ -4,7 +4,7 @@ import sys
 
 import pytest
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 import eval_report  # noqa: E402
 from eval_report import compare_against_baseline  # noqa: E402

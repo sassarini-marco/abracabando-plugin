@@ -3,7 +3,7 @@ import sys
 
 import pytest
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 from mcp_preflight import (  # noqa: E402
     MCPEmptyError,

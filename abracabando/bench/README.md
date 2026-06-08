@@ -7,102 +7,137 @@ This directory contains the evaluation harness for measuring skill quality acros
 ```
 bench/
 ├── README.md                    # This file
+├── REFRESH_PROCEDURE.md         # Operator runbook for refreshing dataset / fixtures
 ├── eval_runner.py               # Main harness: runs cases, computes D2/D4, submits judge batch
-├── eval_report.py               # Generates summary table from eval_results/
-├── test_eval_runner.py          # Unit tests for eval logic
+├── eval_report.py               # Generates summary table + regression gate from eval_results/
+├── output_rules.py              # Deterministic output-contract linter (shared by tests + runner)
+├── mcp_preflight.py             # Layer attribution: skill_ok / mcp_layer_* / needs_rerun
+├── mcp_probe.py                 # Layer 0: live MCP tool smoke / full probes
+├── mcp_replay.py                # MCP stdio record/replay server for frozen tier
+├── tool_contracts.py            # Declarative MCP tool contract table (smoke + full tiers)
 ├── judge_prompt_v1.md           # System prompt for Haiku judge (D1/D3/D5/D6/D7)
-├── mcp.json                     # MCP server config for eval runs
-├── REFRESH_PROCEDURE.md         # How to refresh dataset when cases go stale
-├── dataset/                     # Test cases and schema
-│   ├── eval_dataset.json        # 6 test cases (templates 3.1, 3.2, 3.3)
-│   └── eval_dataset_schema.json # JSON Schema for eval_dataset.json
-├── eval_results/                # Latest scores for all 6 cases (*.json)
-├── ground-truth/                # TED PIN labeller and labelled data
-│   ├── label_ted_pins.py        # Labels TED PINs with follow-on CN/CAN conversion
-│   ├── test_label_ted_pins.py   # Tests for the labeller
-│   └── ted_pin_labels_*.json    # Labelled TED records (Oct 2025–May 2026)
-└── archive/                     # Historical benchmarks and reports
-    └── benchmark-2026-05-29.md  # Old tier 1-5 benchmark (pre-eval-runner era)
+├── cases/                       # One entry per test case
+│   ├── eval_dataset.json        # 21 test cases (7 skills × 3 scenarios each)
+│   ├── eval_dataset_schema.json # JSON Schema for eval_dataset.json
+│   ├── baseline.json            # Blessed deterministic scores (regression gate baseline)
+│   └── <case-id>/               # e.g. 3.1-001/
+│       ├── golden.json          # Independent frozen oracle (hand-verified upstream data)
+│       └── PROVENANCE.md        # Capture date, source URL, hand-verification checklist
+├── fixtures/                    # Frozen MCP replay fixtures (committed; deterministic gate)
+│   ├── tools_list.json          # Shared tool schemas for all replay runs
+│   └── <case-id>/               # calls.json + tools_list.json per case
+├── config/                      # MCP server configuration
+│   ├── mcp_live.json            # Live tier: real industrial-mcp server
+│   └── mcp_replay.json          # Frozen tier: replay server (bench/mcp_replay.py)
+├── scripts/                     # Operator scripts (not run by CI)
+│   ├── capture_golden.py        # Fetch raw upstream API responses for the oracle
+│   └── generate_ground_truth.py # Derive ground_truth_records from the golden
+├── tests/                       # Pytest suite
+│   ├── test_eval_runner.py      # Unit tests for D2/D4 scoring + deterministic flow
+│   ├── test_eval_report.py      # Regression gate logic
+│   ├── test_output_rules.py     # Linter rule unit tests
+│   ├── test_mcp_preflight.py    # Layer attribution unit tests
+│   ├── test_mcp_replay.py       # Replay fixture roundtrip tests
+│   ├── test_generate_ground_truth.py  # Proves oracle derivation never calls industrial_mcp
+│   ├── test_tool_contracts.py   # Layer 0 live smoke tests (tagged @live, skipped in CI)
+│   ├── test_headless_smoke.py   # Headless claude invocation smoke test (secret-gated)
+│   └── test_ci_workflows.py     # CI workflow YAML content assertions
+└── eval_results/                # Latest scores for all cases (gitignored, transient)
 ```
 
 ## Quick start
 
-### Run evaluation
+### Run the eval
 
 ```bash
 # Check for stale cases first
 python bench/eval_runner.py --check-staleness
 
-# Run all 6 cases (takes ~10 min with default 10s delay between cases)
-ANTHROPIC_API_KEY=<key> python bench/eval_runner.py
+# Run all cases — frozen tier (deterministic, no API key)
+python bench/eval_runner.py
 
-# Run only one template
+# Run one template
 python bench/eval_runner.py --template 3.1
 
-# Faster model for testing (default: sonnet)
-python bench/eval_runner.py --model haiku --delay 5
+# Live tier (real MCP + judge, needs ANTHROPIC_API_KEY)
+ANTHROPIC_API_KEY=<key> python bench/eval_runner.py --live
 ```
 
 ### Generate report
 
 ```bash
 python bench/eval_report.py
+python bench/eval_report.py --gate --baseline-path bench/cases/baseline.json
 ```
 
-### Run tests
+### Run unit tests
 
 ```bash
-pytest bench/test_eval_runner.py -v
+pytest abracabando/bench/tests -q -m "not live"  # offline (fast)
+pytest abracabando/bench/tests -q                # includes live Layer 0 smoke
 ```
 
-## Evaluation dimensions
+## Eval tiers
 
-| Dim | Name | Type | Checker |
-|-----|------|------|---------|
+| Tier | Trigger | MCP source | API key | What it proves |
+|------|---------|------------|---------|----------------|
+| static | every PR | none | no | structure, schema, linters, replay unit tests |
+| frozen | secret-gated / manual | `bench/config/mcp_replay.json` (fixtures) | yes | skills emit correct contract against frozen data |
+| live | monthly cron + manual | `bench/config/mcp_live.json` (real MCP) | yes | upstream data + MCP server have not drifted |
+
+## Eval dimensions
+
+| Dim | Name | Type | How scored |
+|-----|------|------|------------|
 | D1 | Relevance | Judge | Haiku judges if response answers the user's question |
-| D2 | Recall | Deterministic | `check_d2_recall()` — fraction of expected IDs found |
-| D3 | Signal quality | Judge | Haiku judges if probabilities are qualitative (Alta/Media/Bassa) |
-| D4 | Freshness | Deterministic | `check_d4_freshness()` — "Dati letti il" within 45 days |
-| D5 | Traceability | Judge | Haiku judges if every data point has a date |
+| D2 | Recall | Deterministic | fraction of expected IDs found in the answer |
+| D3 | Signal quality | Judge | Haiku judges if confidence is qualitative (Alta/Media/Bassa) |
+| D4 | Freshness | Deterministic | `Dati letti il` date within 35 days of today |
+| D5 | Traceability | Judge | Haiku judges if every figure has a `fonte:` URL |
 | D6 | Language | Judge | Haiku judges if output is in Italian |
-| D7 | Multi-source synthesis | Judge | Haiku judges if scheda-opportunita has TED-ANAC cross-section |
+| D7 | Multi-source synthesis | Judge | Haiku judges TED-ANAC cross-section in scheda-opportunita |
 
-**Deterministic** dimensions (D2, D4) are computed by `eval_runner.py` rule-based checks.
-**Judge** dimensions (D1, D3, D5, D6, D7) are scored by Claude Haiku via Batch API using `judge_prompt_v1.md`.
+**Deterministic** dimensions (D2, D4) never need an API key.
+**Judge** dimensions (D1, D3, D5, D6, D7) are scored via Claude Haiku Batch API.
+
+## Layer attribution
+
+Each scored case gets a `layer` label that routes failures to the right repo:
+
+| Layer | Meaning |
+|-------|---------|
+| `skill_ok` | MCP data present and skill surfaced it correctly |
+| `skill_ok_no_data` | Genuinely no data; skill said so explicitly |
+| `mcp_layer_empty` | MCP returned nothing despite oracle expecting data |
+| `mcp_layer_partial` | MCP returned some but not all golden records |
+| `mcp_layer_wrong` | Cross-tool consistency check flagged divergence |
+| `skill_layer_bug` | MCP data was present but skill dropped or fabricated it |
+| `stale_ground_truth` | Oracle says empty but MCP found data — oracle needs refresh |
+| `needs_rerun` | Infrastructure noise (cold start, file-path deferral) |
 
 ## Templates
 
-| ID | Template | Skill | Description |
-|----|----------|-------|-------------|
-| 3.1 | pin-radar | `/pin-radar` | Find active TED Prior Information Notices for Italy |
-| 3.2 | consultazioni-radar | `/consultazioni-radar` | Monitor Consip consultations and bandi |
-| 3.3 | scheda-opportunita | `/scheda-opportunita` | Detailed briefing on a specific opportunity (TED+ANAC+PNRR) |
+| ID | Skill | Description |
+|----|-------|-------------|
+| 3.1 | `pin-radar` | Find active TED Prior Information Notices for Italy |
+| 3.2 | `consultazioni-radar` | Monitor Consip consultations and bandi |
+| 3.3 | `scheda-opportunita` | Detailed briefing on a specific opportunity (TED+ANAC+PNRR) |
+| 3.4 | `digest-pregara` | Pre-tender digest for a specific opportunity |
+| 3.5 | `profilo-sa` | Spending profile for a contracting authority |
+| 3.6 | `reconciliation-pnrr` | PNRR fund reconciliation for a project |
+| 3.7 | `analisi-disciplinare` | Disciplinary document analysis |
 
-Each template has 2 test cases in `eval_dataset.json` (e.g. 3.1-001, 3.1-002).
+Each template has 3 scenarios: `happy-path`, `missing-data`, `edge`.
 
-## Ground truth labeller
+## Refreshing the oracle
 
-`ground-truth/label_ted_pins.py` queries TED to find PINs published in a given window, then searches for follow-on Contract Notices (CN) or Contract Award Notices (CAN) from the same buyer and CPV within 30–180 days.
+See `REFRESH_PROCEDURE.md` for the full runbook. Quick version:
 
-The output (6 JSON files) can be used to:
-- Validate D2 recall against real TED publication numbers
-- Measure PIN→gara conversion rates (future metric)
-- Refresh test cases when they go stale
-
-**Usage:**
 ```bash
-python ground-truth/label_ted_pins.py --cpv 48 --limit 50 --output labels.json
+# Capture fresh upstream data for a case
+python bench/scripts/capture_golden.py --case 3.1-001
+
+# Verify + fill bench/cases/3.1-001/golden.json by hand
+# Then regenerate ground truth
+python bench/scripts/generate_ground_truth.py --case 3.1-001
 ```
-
-See `REFRESH_PROCEDURE.md` for the full workflow.
-
-## Archive
-
-`archive/benchmark-2026-05-29.md` documents the old tier 1-5 benchmark system that used `run_benchmark.py` (now deleted). Kept for reference on what the plugin could do before narrowing to "segnale azionabile" focus.
-
-## Notes
-
-- **Skills emit markdown directly** (as of 2026-06-02). The old JSON+renderer architecture was removed.
-- **Eval prompts must include `/skill-name` prefix** to invoke the skill. Plain-text prompts run as general assistant and ignore SKILL.md.
-- **Judge scores require ANTHROPIC_API_KEY** for Batch API. Without it, only D2/D4 deterministic scores run.
-- **Eval results are stale** from JSON era — must be re-run with markdown architecture to establish baseline.

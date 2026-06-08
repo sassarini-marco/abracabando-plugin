@@ -2,7 +2,7 @@
 
 Proves that ``claude -p "/pin-radar ..."`` loads SKILL.md in headless mode and
 emits skill-shaped output, replaying a recorded frozen fixture via
-``bench/mcp_replay.json`` (so no live MCP / 280MB download is needed).
+``bench/config/mcp_replay.json`` (so no live MCP / 280MB download is needed).
 
 Skipped unless both the ``claude`` binary is on PATH AND an API key is present
 (the no-secret static CI tier must skip this cleanly; it runs in the secret-gated
@@ -19,7 +19,7 @@ import sys
 
 import pytest
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 import eval_runner  # noqa: E402
 from output_rules import (  # noqa: E402
@@ -28,7 +28,7 @@ from output_rules import (  # noqa: E402
     check_italian_only,
 )
 
-PLUGIN = pathlib.Path(__file__).resolve().parent.parent
+PLUGIN = pathlib.Path(__file__).resolve().parent.parent.parent
 
 pytestmark = pytest.mark.skipif(
     shutil.which("claude") is None or not os.environ.get("ANTHROPIC_API_KEY"),
@@ -44,7 +44,7 @@ def test_headless_pin_radar_emits_skill_shaped_output():
     }
     os.environ["MCP_REPLAY_CASE"] = "3.1-001"
     answer = eval_runner.run_case(
-        case, PLUGIN, PLUGIN / "bench" / "mcp_replay.json", timeout=300
+        case, PLUGIN, PLUGIN / "bench" / "config" / "mcp_replay.json", timeout=300
     )
 
     assert answer.strip(), "headless run produced no result text"

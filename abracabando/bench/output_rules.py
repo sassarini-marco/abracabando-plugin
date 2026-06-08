@@ -160,6 +160,48 @@ def _ground_truth_ids(ground_truth: object) -> list[str]:
     return out
 
 
+def check_audit_parseable(text: str) -> RuleResult:
+    """The ``## Audit trail`` fenced block must contain parseable structured rows.
+
+    Accepts two formats:
+    - Key-value lines: ``key: value`` (current default skill output)
+    - Pipe-separated table rows: ``tool | args | n``
+
+    An empty block or lines that match neither format raise the explicit
+    ``AUDIT_UNPARSEABLE`` state so a skill cannot under-report calls in
+    unstructured prose and slip through the gate.
+    """
+    idx = text.find("## Audit trail")
+    if idx == -1:
+        return RuleResult("audit_parseable", False,
+                          "AUDIT_UNPARSEABLE: no '## Audit trail' section")
+
+    trail = text[idx:]
+    fence_match = re.search(r"```[^\n]*\n(.*?)```", trail, re.DOTALL)
+    if not fence_match:
+        return RuleResult("audit_parseable", False,
+                          "AUDIT_UNPARSEABLE: no fenced block after '## Audit trail'")
+
+    block = fence_match.group(1)
+    content_lines = [ln for ln in block.splitlines() if ln.strip()]
+    if not content_lines:
+        return RuleResult("audit_parseable", False,
+                          "AUDIT_UNPARSEABLE: fenced block is empty")
+
+    bad: list[str] = []
+    for line in content_lines:
+        line_s = line.strip()
+        # Skip markdown table separators (--- or ===).
+        if re.fullmatch(r"[-|=: ]+", line_s):
+            continue
+        # Accept key:value OR pipe-separated fields.
+        if ":" not in line_s and "|" not in line_s:
+            bad.append(line_s[:60])
+    ok = not bad
+    detail = "ok" if ok else f"AUDIT_UNPARSEABLE: unparseable rows: {bad[:2]}"
+    return RuleResult("audit_parseable", ok, detail)
+
+
 def check_no_criteria_fabrication(text: str) -> RuleResult:
     """When a document is declared unreadable in 'Dati non disponibili', the
     'Criteri di valutazione' section must not contain fabricated point values.
@@ -201,6 +243,7 @@ def run_all_rules(text: str, ground_truth: object = None) -> list[RuleResult]:
         check_qualitative_confidence(text),
         check_no_exposed_tool_names(text),
         check_audit_trail_block(text),
+        check_audit_parseable(text),
         check_no_fabricated_ids(text, gt_ids),
         check_no_criteria_fabrication(text),
     ]
@@ -214,6 +257,7 @@ __all__ = [
     "check_qualitative_confidence",
     "check_no_exposed_tool_names",
     "check_audit_trail_block",
+    "check_audit_parseable",
     "check_no_fabricated_ids",
     "check_no_criteria_fabrication",
     "run_all_rules",

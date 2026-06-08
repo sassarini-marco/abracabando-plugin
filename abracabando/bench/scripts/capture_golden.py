@@ -4,7 +4,7 @@
 For each case this fetches the RAW upstream API response **directly** — TED /
 ANAC / PNRR HTTP JSON — deliberately bypassing the ``industrial-mcp`` server so
 that MCP transform/staleness bugs cannot hide inside the oracle. Raw payloads
-land under ``golden/<case_id>/raw_<source>.json`` and a ``PROVENANCE.md`` row
+land under ``cases/<case_id>/raw_<source>.json`` and a ``PROVENANCE.md`` row
 records the source URL + capture date.
 
 The captured records still require **hand-verification** before the golden is
@@ -12,7 +12,7 @@ trusted (see bench/REFRESH_PROCEDURE.md §2): a human confirms the records are
 real and correct, then fills ``golden.json``'s ``records`` / ``empty_reason``.
 
 A case declares what to fetch via an optional ``golden_capture`` block in
-``bench/dataset/eval_dataset.json``:
+``bench/cases/eval_dataset.json``:
 
     "golden_capture": [
       {"source": "ted", "method": "POST",
@@ -33,8 +33,8 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 BENCH = Path(__file__).resolve().parent.parent
-DATASET = BENCH / "dataset" / "eval_dataset.json"
-GOLDEN_DIR = Path(__file__).resolve().parent / "golden"
+DATASET = BENCH / "cases" / "eval_dataset.json"
+GOLDEN_DIR = BENCH / "cases"
 
 
 def _today() -> str:

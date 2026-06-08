@@ -11,8 +11,8 @@ schedule:
 | Tier | Trigger | MCP source | API key | What it proves |
 |------|---------|------------|---------|----------------|
 | static | every PR | none | no | structure, schema, linters, replay unit tests |
-| frozen | secret-gated / manual | `bench/mcp_replay.json` (recorded fixtures) | yes | the skills still emit a correct contract against frozen data |
-| live | monthly cron + manual | `bench/mcp.json` (real `industrial-mcp`) | yes | upstream data + MCP server have not drifted |
+| frozen | secret-gated / manual | `bench/config/mcp_replay.json` (recorded fixtures) | yes | the skills still emit a correct contract against frozen data |
+| live | monthly cron + manual | `bench/config/mcp_live.json` (real `industrial-mcp`) | yes | upstream data + MCP server have not drifted |
 
 The golden frozen records are the **independent oracle**. Both the skill answer
 and the MCP output are checked against the golden, never against each other.
@@ -21,20 +21,20 @@ and the MCP output are checked against the golden, never against each other.
 
 ## 0. Quick map of the moving parts
 
-- `bench/dataset/eval_dataset.json` — the 18 cases (6 skills × {happy-path,
+- `bench/cases/eval_dataset.json` — the 21 cases (7 skills × {happy-path,
   missing-data, edge}). Each case carries `skill`, `template`, `tier`,
   `ground_truth_records`, `frozen_date`, `ttl_days`, `judge_prompt_version`.
-- `bench/dataset/eval_dataset_schema.json` — the schema the dataset validates against.
-- `bench/ground-truth/golden/<case_id>/` — raw upstream API JSON + `PROVENANCE.md`,
-  captured independently of the MCP server (Task 8). This is the oracle.
-- `bench/ground-truth/capture_golden.py` — fetches the raw upstream responses.
-- `bench/ground-truth/generate_ground_truth.py` — derives `ground_truth_records`
+- `bench/cases/eval_dataset_schema.json` — the schema the dataset validates against.
+- `bench/cases/<case_id>/` — `golden.json` (hand-verified oracle) + `PROVENANCE.md`,
+  captured independently of the MCP server. This is the oracle.
+- `bench/scripts/capture_golden.py` — fetches the raw upstream responses.
+- `bench/scripts/generate_ground_truth.py` — derives `ground_truth_records`
   from the committed golden (NOT from the MCP server).
 - `bench/fixtures/<case_id>/` — recorded MCP call/response sequences for the frozen tier.
 - `bench/mcp_replay.py` — the stdio record/replay server.
 - `bench/eval_runner.py` — runs cases; `--frozen` (default) / `--live`.
 - `bench/eval_report.py` — scoring report; `--gate` for the deterministic merge gate.
-- `bench/baseline.json` — the blessed deterministic baseline the gate compares against.
+- `bench/cases/baseline.json` — the blessed deterministic baseline the gate compares against.
 
 ---
 
@@ -56,10 +56,10 @@ TED / ANAC / PNRR HTTP JSON, deliberately bypassing the MCP server so MCP
 transform bugs cannot hide in the oracle:
 
 ```bash
-python3 bench/ground-truth/capture_golden.py --case <case_id>
+python3 bench/scripts/capture_golden.py --case <case_id>
 ```
 
-This writes `bench/ground-truth/golden/<case_id>/` plus a `PROVENANCE.md` row
+This writes `bench/cases/<case_id>/` plus a `PROVENANCE.md` row
 recording the source URL and capture date.
 
 **Hand-verification (mandatory, once per capture).** A human must open the
@@ -72,20 +72,14 @@ past its `ttl_days`.
 ## 3. Regenerate ground truth from the golden
 
 ```bash
-python3 bench/ground-truth/generate_ground_truth.py --case <case_id>
+python3 bench/scripts/generate_ground_truth.py --case <case_id>
 ```
 
 `generate_ground_truth` derives `ground_truth_records` from the committed golden.
 A genuinely empty golden yields `{"ground_truth_records": [], "empty_reason": ...}`
 — that is the correct, expected shape for a missing-data case, not a failure.
-Copy the result into the case in `eval_dataset.json` and bump its `frozen_date`
-and `snapshot_date`.
-
-For the TED 3.1 conversion labels specifically, re-run:
-
-```bash
-python3 bench/ground-truth/label_ted_pins.py --cpv 72 --limit 20
-```
+Copy the result into the case in `bench/cases/eval_dataset.json` and bump its
+`frozen_date` and `snapshot_date`.
 
 ## 4. Re-record the frozen fixtures
 
@@ -161,7 +155,7 @@ new audit-trail key):
 The eval shells `claude -p "/<skill> ..."`. On the verified toolchain
 (claude 2.1.161) `/skill-name` loads `SKILL.md` in headless mode. If a future
 claude version does NOT load skills from `-p` (the smoke test
-`bench/test_headless_smoke.py` will fail), switch `run_case` to the documented
+`bench/tests/test_headless_smoke.py` will fail), switch `run_case` to the documented
 fallback:
 
 ```bash

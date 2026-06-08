@@ -4,6 +4,18 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **`bench/` filesystem restructure** — directories reorganised for open-repo clarity:
+  - `dataset/` + `ground-truth/golden/` + `baseline.json` merged into `cases/` (dataset, schema, baseline, and per-case oracle in one place)
+  - `ground-truth/capture_golden.py` + `generate_ground_truth.py` promoted to `scripts/`
+  - `mcp.json` → `config/mcp_live.json`; `mcp_replay.json` → `config/mcp_replay.json`
+  - All `test_*.py` consolidated under `tests/`
+  - All path constants in `eval_runner.py`, `eval_report.py`, `mcp_probe.py`, `mcp_preflight.py`, and the moved scripts/tests updated accordingly
+  - `bench/README.md` rewritten with full directory map, tier table, and layer attribution reference
+  - `CLAUDE.md` test command updated to cover `bench/tests/` in addition to `abracabando/tests/`
+  - Added `bench/probe_results/` to `.gitignore`
+
 ### Fixed
 
 - **Broken OpenPNRR CUP lookup in two skills** (`reconciliation-pnrr`, `scheda-opportunita`):

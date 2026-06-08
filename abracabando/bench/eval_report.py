@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 BENCH = Path(__file__).resolve().parent
-DEFAULT_BASELINE = BENCH / "baseline.json"
+DEFAULT_BASELINE = BENCH / "cases" / "baseline.json"
 
 # Layers that are NOT a failure (mirrors eval_runner.PASSING_LAYERS).
 PASSING_LAYERS = {"skill_ok", "skill_ok_no_data"}

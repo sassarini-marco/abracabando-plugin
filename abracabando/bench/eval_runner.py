@@ -22,15 +22,16 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-sys.path.insert(0, str(Path(__file__).resolve().parent / "ground-truth"))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 
-from mcp_preflight import attribute_layer, extract_records, record_identity  # noqa: E402
+from mcp_preflight import attribute_layer, attribute_layer_from_probe, extract_records, record_identity  # noqa: E402
+from mcp_probe import load_probe_results  # noqa: E402
 from output_rules import run_all_rules  # noqa: E402
 
 BENCH = Path(__file__).resolve().parent
 PLUGIN = BENCH.parent
 EVAL_RESULTS = BENCH / "eval_results"
-GOLDEN_DIR = BENCH / "ground-truth" / "golden"
+GOLDEN_DIR = BENCH / "cases"
 
 # Pin to a full model version string (no alias) so frozen runs are reproducible;
 # there is no --temperature flag, so tolerant scoring + a pinned version is the
@@ -47,8 +48,12 @@ TEMPLATE_TO_SKILL: dict[str, str] = {
     "3.7": "analisi-disciplinare",
 }
 
-# Layers that do NOT count as a failure for the hard gate.
+# Layers that count as a clean pass for the hard gate.
 PASSING_LAYERS = {"skill_ok", "skill_ok_no_data"}
+# Layers that are infrastructure noise — neither pass nor fail.
+NEEDS_RERUN_LAYERS = {"needs_rerun"}
+
+JUDGE_MODEL = "claude-haiku-4-5-20251001"
 
 JUDGE_SCHEMA = {
     "type": "object",
@@ -115,7 +120,7 @@ def check_d2_recall(answer: str, ground_truth_records: list[dict]) -> float | No
     return hits / len(expected)
 
 
-def check_d4_freshness(answer: str, reference_date: str, max_days: int = 45) -> bool:
+def check_d4_freshness(answer: str, reference_date: str, max_days: int = 35) -> bool:
     """Return True if the 'Dati letti il YYYY-MM-DD' date in answer is within max_days of reference_date."""
     match = re.search(r"Dati letti il (\d{4}-\d{2}-\d{2})", answer)
     if not match:
@@ -280,12 +285,12 @@ def load_golden_records(case_id: str) -> list[dict]:
     return json.loads(path.read_text()).get("records") or []
 
 
-def _render_fidelity(answer: str, mcp_records: list[dict]) -> float | None:
+def _surfacing_rate(answer: str, mcp_records: list[dict]) -> float | None:
     """Of the records the MCP actually returned, what fraction did the skill
     surface (by record id) in its answer? None when the MCP returned nothing.
 
-    This is the clean skill-vs-MCP signal: low MCP count -> MCP/query gap; high
-    MCP count but low fidelity -> the skill dropped data it was handed."""
+    Low MCP count → MCP/query gap; high MCP count but low surfacing rate →
+    the skill dropped data it was handed."""
     ids = {rid for r in mcp_records if (rid := record_identity(r))}
     if not ids:
         return None
@@ -301,14 +306,17 @@ def score_case_deterministic(
     reference_date: str | None = None,
     mcp_tools: list[str] | None = None,
     mcp_calls: int | None = None,
+    probe_results: dict | None = None,
 ) -> dict:
     """Score the deterministic dimensions for one case — no API key required.
 
     Runs the output-rule linter (the output contract), D2 recall, D4 freshness,
     and golden-backed layer attribution. When ``mcp_records`` are the records the
     live MCP actually returned, attribution can separate skill bugs from MCP
-    gaps. When omitted it falls back to the golden (frozen replay). No judge
-    dimensions are computed here.
+    gaps. When ``probe_results`` are also provided (from ``mcp_probe.py``),
+    attribution uses the grounded cross-tool consistency signal instead of the
+    heuristic ``_divergent()`` reconstruction. When both are omitted it falls
+    back to the golden (frozen replay). No judge dimensions are computed here.
     """
     used_real_mcp = mcp_records is not None
     if mcp_records is None:
@@ -320,10 +328,17 @@ def score_case_deterministic(
     d4 = check_d4_freshness(answer, ref)
     rules = run_all_rules(answer, gt_records)
     rules_map = {r.rule_id: r.passed for r in rules}
-    layer = attribute_layer(answer, mcp_records, golden_records)
+
+    if probe_results and used_real_mcp:
+        layer = attribute_layer_from_probe(answer, mcp_records, golden_records, probe_results)
+    else:
+        layer = attribute_layer(answer, mcp_records, golden_records)
 
     d2_ok = d2 is None or d2 == 1.0
-    overall = bool(d4) and d2_ok and all(rules_map.values()) and layer in PASSING_LAYERS
+    if layer in NEEDS_RERUN_LAYERS:
+        overall = None  # infrastructure issue — neither pass nor fail
+    else:
+        overall = bool(d4) and d2_ok and all(rules_map.values()) and layer in PASSING_LAYERS
 
     result = {
         "id": case["id"],
@@ -343,7 +358,7 @@ def score_case_deterministic(
         result["mcp_record_count"] = len(mcp_records)
         result["mcp_tools_called"] = mcp_tools or []
         result["mcp_calls"] = mcp_calls if mcp_calls is not None else None
-        result["render_fidelity"] = _render_fidelity(answer, mcp_records)
+        result["surfacing_rate"] = _surfacing_rate(answer, mcp_records)
     return result
 
 
@@ -375,6 +390,29 @@ def build_judge_request(case: dict, answer: str, judge_prompt: str) -> dict:
             "tool_choice": {"type": "tool", "name": "judge_output"},
         },
     }
+
+
+def run_judge_sync(case: dict, answer: str, judge_prompt: str, client) -> dict:
+    """Score one case with the judge synchronously (dev iteration / single case).
+
+    Faster than the Batch API for individual cases; not cost-optimal for full
+    runs (use ``run_judge_batch`` for ≥2 cases).
+    """
+    req = build_judge_request(case, answer, judge_prompt)
+    params = req["params"]
+    resp = client.messages.create(
+        model=JUDGE_MODEL,
+        temperature=params.get("temperature", 0.1),
+        max_tokens=params.get("max_tokens", 1024),
+        system=params["system"],
+        messages=params["messages"],
+        tools=params["tools"],
+        tool_choice=params["tool_choice"],
+    )
+    for block in resp.content:
+        if block.type == "tool_use" and block.name == "judge_output":
+            return block.input
+    return {}
 
 
 def run_judge_batch(requests: list[dict], client) -> dict[str, dict]:
@@ -435,12 +473,12 @@ def main() -> None:
     tier = ap.add_mutually_exclusive_group()
     tier.add_argument(
         "--frozen", action="store_true",
-        help="Frozen tier (default): replay fixtures via bench/mcp_replay.json, "
+        help="Frozen tier (default): replay fixtures via bench/config/mcp_replay.json, "
              "deterministic scoring, no API key required.",
     )
     tier.add_argument(
         "--live", action="store_true",
-        help="Live tier: real bench/mcp.json + non-empty preflight; surfaces "
+        help="Live tier: real bench/config/mcp_live.json + non-empty preflight; surfaces "
              "MCP-layer attributions for ../industrial-data-mcp.",
     )
     ap.add_argument(
@@ -469,13 +507,27 @@ def main() -> None:
         "--case",
         help="Run only this specific case ID (e.g. 3.7-001).",
     )
+    ap.add_argument(
+        "--sync",
+        action="store_true",
+        help="Use synchronous messages.create for the judge instead of the Batch API. "
+             "Faster for single-case dev iteration; use the default batch for full runs.",
+    )
+    ap.add_argument(
+        "--probe-dir",
+        type=Path,
+        default=None,
+        help="Directory containing mcp_probe_result JSON files (from mcp_probe.py). "
+             "When provided, the live-tier attribution uses the grounded cross-tool "
+             "consistency signal instead of the heuristic reconstruction.",
+    )
     args = ap.parse_args()
 
     # Frozen is the default when neither flag is given.
     live = args.live
-    mcp_config = (BENCH / "mcp.json") if live else (BENCH / "mcp_replay.json")
+    mcp_config = (BENCH / "config" / "mcp_live.json") if live else (BENCH / "config" / "mcp_replay.json")
 
-    dataset = json.loads((BENCH / "dataset" / "eval_dataset.json").read_text())
+    dataset = json.loads((BENCH / "cases" / "eval_dataset.json").read_text())
     cases = dataset["cases"]
 
     if args.case:
@@ -513,6 +565,16 @@ def main() -> None:
 
     timeout = args.timeout if args.timeout is not None else (1500 if live else 900)
 
+    # Load probe results for grounded live-tier attribution (optional).
+    probe_results: dict = {}
+    if live:
+        probe_dir = args.probe_dir
+        probe_results = load_probe_results(probe_dir)
+        if probe_results:
+            print(f"  [probe] Loaded {len(probe_results)} probe result(s) for attribution.")
+        else:
+            print("  [probe] No probe results found — using heuristic attribution.")
+
     EVAL_RESULTS.mkdir(exist_ok=True)
     today_iso = date.today().isoformat()
 
@@ -547,6 +609,7 @@ def main() -> None:
             case, answer, golden_records,
             mcp_records=mcp_records, reference_date=today_iso,
             mcp_tools=run.get("mcp_tools"), mcp_calls=run.get("mcp_calls"),
+            probe_results=probe_results if live else None,
         )
         result["timed_out"] = run.get("timed_out", False)
         result["wall_time_s"] = wall_time_s
@@ -559,28 +622,44 @@ def main() -> None:
         d2_str = "N/A" if d2 is None else f"{d2:.2f}"
         extra = ""
         if live:
-            rf = result.get("render_fidelity")
-            rf_str = "N/A" if rf is None else f"{rf:.2f}"
+            sr = result.get("surfacing_rate")
+            sr_str = "N/A" if sr is None else f"{sr:.2f}"
             extra = (f"  mcp_recs={result.get('mcp_record_count')} "
-                     f"tools={result.get('mcp_tools_called')} render={rf_str}")
+                     f"tools={result.get('mcp_tools_called')} surfacing={sr_str}")
         print(
             f"         D2={d2_str}  D4={result['d4_freshness']}  "
             f"layer={result['layer']}  pass={result['overall_pass']}  "
             f"time={wall_time_s}s{extra}"
         )
 
-    # Submit judge batch only on the live tier with an API key.
+    # Submit judge only on the live tier with an API key.
     if anthropic_client is not None:
-        print("\nSubmitting judge batch...")
-        requests = [
-            build_judge_request(case, answers[case["id"]], judge_prompt)
-            for case in cases
-        ]
-        try:
-            judge_results = run_judge_batch(requests, anthropic_client)
-        except Exception as exc:
-            print(f"ERROR: Judge batch failed: {exc}", file=sys.stderr)
-            judge_results = {}
+        judge_results: dict[str, dict] = {}
+        if args.sync or (args.case and len(cases) == 1):
+            # Synchronous mode: one messages.create per case — faster for dev iteration.
+            print("\nRunning judge (sync mode)...")
+            for case in cases:
+                cid = case["id"]
+                print(f"  [{cid}] judging...", end=" ", flush=True)
+                try:
+                    jr = run_judge_sync(case, answers[cid], judge_prompt, anthropic_client)
+                    judge_results[cid] = jr
+                    print(f"d1={jr.get('d1_score')} d3={jr.get('d3_score')} d7={jr.get('d7_score')}")
+                except Exception as exc:
+                    print(f"ERROR: {exc}", file=sys.stderr)
+                    judge_results[cid] = {"error": str(exc)}
+        else:
+            # Batch mode: ~50% cheaper for multi-case runs; ~2-5 min wall time.
+            print("\nSubmitting judge batch...")
+            requests = [
+                build_judge_request(case, answers[case["id"]], judge_prompt)
+                for case in cases
+            ]
+            try:
+                judge_results = run_judge_batch(requests, anthropic_client)
+            except Exception as exc:
+                print(f"ERROR: Judge batch failed: {exc}", file=sys.stderr)
+                judge_results = {}
     else:
         judge_results = {}
 

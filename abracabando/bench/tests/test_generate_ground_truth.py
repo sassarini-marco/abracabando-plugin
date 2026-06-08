@@ -8,12 +8,13 @@ from __future__ import annotations
 
 import json
 import os
+import pathlib
 import sys
 import types
 
-_DIR = os.path.dirname(os.path.abspath(__file__))
-if _DIR not in sys.path:
-    sys.path.insert(0, _DIR)
+_SCRIPTS = str(pathlib.Path(__file__).resolve().parent.parent / "scripts")
+if _SCRIPTS not in sys.path:
+    sys.path.insert(0, _SCRIPTS)
 
 import generate_ground_truth as ggt  # noqa: E402
 
