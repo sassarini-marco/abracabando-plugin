@@ -43,6 +43,7 @@ mcp_probe_result schema
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import re
 import sys
@@ -138,10 +139,8 @@ def warm_up(mcp_config: Path, budget_seconds: int = 600) -> str:
         if elapsed > budget_seconds:
             return "cold_start"
         # Trivial ANAC call to trigger any remaining index build.
-        try:
+        with contextlib.suppress(MCPEmptyError):
             _call("anac_search_awards", {"q": "prova", "rows": 1}, mcp_config)
-        except MCPEmptyError:
-            pass  # empty result is fine — the server responded
         return "ok"
     except Exception:
         elapsed = time.time() - t0

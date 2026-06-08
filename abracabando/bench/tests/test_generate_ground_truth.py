@@ -7,7 +7,6 @@ tests prove that derivation never touches ``industrial_mcp``.
 from __future__ import annotations
 
 import json
-import os
 import pathlib
 import sys
 import types

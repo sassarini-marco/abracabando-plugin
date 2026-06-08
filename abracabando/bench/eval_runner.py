@@ -24,7 +24,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 
-from mcp_preflight import attribute_layer, attribute_layer_from_probe, extract_records, record_identity  # noqa: E402
+from mcp_preflight import (  # noqa: E402
+    attribute_layer,
+    attribute_layer_from_probe,
+    extract_records,
+    record_identity,
+)
 from mcp_probe import load_probe_results  # noqa: E402
 from output_rules import run_all_rules  # noqa: E402
 
