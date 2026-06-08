@@ -6,7 +6,45 @@
 
 ### Fixed
 
-- **`openpnrr_get` parameter name in skills** (`skills/reconciliation-pnrr/SKILL.md`, `skills/scheda-opportunita/SKILL.md`): both skills were calling `openpnrr_get(endpoint="progetti", id="<cup>")` but the MCP tool parameter is named `item_id`, not `id`. Calls with the wrong name cause a FastMCP validation error at runtime. Fixed to `item_id="<cup>"`.
+- **Broken OpenPNRR CUP lookup in two skills** (`reconciliation-pnrr`, `scheda-opportunita`):
+  both skills called `openpnrr_get(endpoint="progetti", item_id="<cup>")` but
+  `openpnrr_get` resolves resources by internal integer pk — passing a CUP always
+  returns 404. Replaced with `openpnrr_search_progetti(cup="<cup>")`, the correct
+  client-side CUP scanner (verified live: returns `cup_filter_supported` flag and
+  up to 3000 projects scanned). Intermediate fix `id→item_id` was necessary but
+  not sufficient; this replaces it entirely.
+
+- **Wrong ANAC tool for CUP reconciliation** (`reconciliation-pnrr`): the skill
+  used `anac_search_awards(query="<ente beneficiario>")` to find CIGs for a CUP —
+  a lossy free-text match on entity name. Replaced with `anac_awards_by_cup(cup=)`
+  which joins the ANAC `cup` table directly for an exact CUP→CIG resolution.
+  `anac_awards_by_cup` added to `allowed-tools`; `anac_search_awards` removed from
+  the CUP-resolution step. Verified live: 23 CIGs returned for CUP B56E23004900006.
+
+- **OpenCoesione section in `scheda-opportunita` could not return project data**:
+  the skill called `opencoesione_list_datasets()` and `opencoesione_describe_dataset()`
+  which return catalog metadata only (dataset titles, URLs) — no importo, beneficiario,
+  or stato. Replaced with `opencoesione_project_by_cup(cup=)` (primary) and
+  `opencoesione_search_projects(cup=)` (fallback). Updated `allowed-tools` accordingly.
+  Steps 3 and 4 now fire only when a `cup` is available, not on the vague
+  "CPV/settore tipicamente PNRR" trigger.
+
+### Changed
+
+- **Shared cost model for ANAC and multi-page tools** (`skills/shared/regole-comuni.md`,
+  `skills/shared/strategia-strumenti.md`): added explicit rules derived from
+  adversarial code review of the MCP server:
+  - ANAC table counts per tool: `anac_sa_history` = 2, `anac_search_awards`/`anac_awards_by_piva` = 3, `anac_award_detail`/`anac_awards_by_cup` = 4. Tables are shared — cold start paid once per conversation.
+  - New rule: never invoke two ANAC tools in parallel (no download lock was in the server cache; lock added server-side in the same release but the skill rule remains for safety).
+  - New rule: on ANAC timeout/error, emit `## Dati non disponibili` and do not retry.
+  - `openpnrr_search_progetti(cup=...)` documented as up to 6 internal HTTP calls; do not retry if CUP not found.
+  - `opencoesione_project_by_cup` documented as up to 3 parquet downloads on cold cache.
+  - New medium-cost tier in the tool table between light and bulk.
+  - `opencoesione_describe_dataset` corrected from bulk to light (catalog-only, no download).
+
+- **`profilo-sa` error handling**: added note that both ANAC tools share tables
+  (cold start paid once), and explicit guidance to stop and emit `## Dati non
+  disponibili` on timeout rather than retrying.
 
 ---
 
