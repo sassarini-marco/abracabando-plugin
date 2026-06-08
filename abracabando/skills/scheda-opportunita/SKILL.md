@@ -10,18 +10,18 @@ allowed-tools:
   - mcp__industrial-mcp-pro__anac_get_dataset
   - mcp__industrial-mcp-pro__ted_search
   - mcp__industrial-mcp-pro__openpnrr_list
-  - mcp__industrial-mcp-pro__openpnrr_get
-  - mcp__industrial-mcp-pro__opencoesione_describe_dataset
-  - mcp__industrial-mcp-pro__opencoesione_list_datasets
+  - mcp__industrial-mcp-pro__openpnrr_search_progetti
+  - mcp__industrial-mcp-pro__opencoesione_project_by_cup
+  - mcp__industrial-mcp-pro__opencoesione_search_projects
   - mcp__industrial-mcp-free__server_capabilities
   - mcp__industrial-mcp-free__anac_search_awards
   - mcp__industrial-mcp-free__anac_search_datasets
   - mcp__industrial-mcp-free__anac_get_dataset
   - mcp__industrial-mcp-free__ted_search
   - mcp__industrial-mcp-free__openpnrr_list
-  - mcp__industrial-mcp-free__openpnrr_get
-  - mcp__industrial-mcp-free__opencoesione_describe_dataset
-  - mcp__industrial-mcp-free__opencoesione_list_datasets
+  - mcp__industrial-mcp-free__openpnrr_search_progetti
+  - mcp__industrial-mcp-free__opencoesione_project_by_cup
+  - mcp__industrial-mcp-free__opencoesione_search_projects
 ---
 
 # Scheda Opportunità
@@ -69,12 +69,13 @@ Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
    - `ted_search(query="buyer-name=\"<ente>\" AND place-of-performance=ITA", limit=10)`
    - Se errore (400, 500, timeout): documenta in `## Dati non disponibili` ed emetti scheda con dati disponibili.
 
-3. **OpenPNRR** (CONDIZIONALE — esegui se `cup` disponibile o se CPV/settore tipicamente PNRR):
-   - `openpnrr_list(endpoint="progetti")` oppure `openpnrr_get(endpoint="progetti", item_id="<cup>")`
+3. **OpenPNRR** (CONDIZIONALE — esegui solo se `cup` è disponibile):
+   - `openpnrr_search_progetti(cup="<cup>")` — scansione fino a 6 pagine interne; **non ritentare** se non trovato.
    - Se zero risultati: documenta in `## Dati non disponibili`.
 
-4. **OpenCoesione** (CONDIZIONALE — esegui se CUP disponibile o se ciclo 2021-2027):
-   - `opencoesione_list_datasets()`, `opencoesione_describe_dataset(dataset_id="progetti_esteso_2021-2027")`
+4. **OpenCoesione** (CONDIZIONALE — esegui solo se `cup` è disponibile):
+   - Primary: `opencoesione_project_by_cup(cup="<cup>")` — restituisce `totale_finanziato`, `stato_procedurale`, beneficiario.
+   - Fallback: `opencoesione_search_projects(cup="<cup>")`.
    - Se zero risultati: documenta in `## Dati non disponibili`.
 
 ### Gestione date implausibili

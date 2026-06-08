@@ -60,6 +60,12 @@ Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
 
 Entrambi i tool leggono uno **snapshot mensile** di ANAC (non la storia completa). La copertura temporale è limitata alla finestra dello snapshot — dichiararla nella sezione `## Metodologia`.
 
+### Cold start e gestione errori
+
+`anac_sa_history` e `anac_search_awards` condividono le tabelle `aggiudicazioni` e `cig`: il cold start (~70-300 s) si paga **una sola volta** alla prima chiamata; la seconda è veloce (cache hit). Non invocarli in parallelo.
+
+Se la prima chiamata ANAC va in timeout o restituisce errore, emetti `## Dati non disponibili` e fermati — non ritentare il download.
+
 ## Formato dell'output
 
 Segui il formato definito in references/output-format.md.

@@ -70,23 +70,34 @@ Con il budget limitato, chiama prima gli strumenti che rispondono in meno di 2
 secondi e non richiedono download bulk. Lascia gli strumenti bulk per ultimi,
 solo se il budget lo consente.
 
-**Strumenti leggeri** (API dirette, nessun download, chiamare per primi):
+**Strumenti leggeri** (API dirette, nessun download, <2 s, chiamare per primi):
 
 | Categoria | Strumenti |
 |---|---|
 | TED (EU) | `ted_search`, `ted_pin_italy`, `ted_get_notice_xml` |
 | Consip | `consip_search_bandi`, `consip_search_consultazioni`, `consip_chiarimenti` |
-| OpenPNRR | `openpnrr_list`, `openpnrr_get`, `openpnrr_search_progetti` |
-| OpenCoesione lookup | `opencoesione_project_by_cup`, `opencoesione_project_url` |
+| OpenPNRR (lista/dettaglio interno) | `openpnrr_list`, `openpnrr_get` |
+| OpenCoesione catalogo | `opencoesione_list_datasets`, `opencoesione_describe_dataset`, `opencoesione_project_url` |
 | ANAC catalogo | `anac_list_datasets`, `anac_get_dataset`, `anac_search_datasets`, `anac_pnrr_datasets`, `anac_ocds_bulk_url` |
 | Altro | `cpv_*`, `mef_*`, `dati_*`, `imprese_*`, `programmazione_*`, `italiadomani_*` |
 
-**Strumenti bulk** (scaricano file pesanti su cold start, 30–60 s; chiamare per ultimi):
+**Strumenti a costo medio** (più chiamate HTTP interne o download parquet su cold start):
 
-| Categoria | Strumenti |
-|---|---|
-| ANAC aggiudicazioni | `anac_search_awards`, `anac_award_detail`, `anac_sa_history`, `anac_awards_by_cup`, `anac_awards_by_piva` |
-| OpenCoesione dati | `opencoesione_search_projects`, `opencoesione_describe_dataset`, `opencoesione_download_parquet` |
+| Categoria | Strumenti | Costo nascosto |
+|---|---|---|
+| OpenPNRR per CUP | `openpnrr_search_progetti(cup=...)` | fino a 6 chiamate HTTP interne (6 pagine × 500 record); **non ritentare** se CUP non trovato |
+| OpenCoesione lookup | `opencoesione_project_by_cup`, `opencoesione_search_projects` | scansiona fino a 3 file Parquet (uno per ciclo) al primo uso; poi cache |
+
+**Strumenti bulk** (scaricano snapshot mensili su cold start, 70–300 s; tabelle ANAC condivise tra tool):
+
+| Categoria | Strumenti | Tabelle |
+|---|---|---|
+| ANAC aggiudicazioni | `anac_sa_history` | 2 |
+| ANAC aggiudicazioni | `anac_search_awards`, `anac_awards_by_piva` | 3 |
+| ANAC aggiudicazioni | `anac_award_detail`, `anac_awards_by_cup` | 4 |
+| OpenCoesione dati | `opencoesione_download_parquet` | — |
+
+Le tabelle ANAC sono **condivise**: la prima chiamata paga il cold start per tutte; le successive leggono la cache. Non invocare mai due strumenti ANAC in parallelo (vedi `regole-comuni.md`).
 
 ### Regola di deduplica
 

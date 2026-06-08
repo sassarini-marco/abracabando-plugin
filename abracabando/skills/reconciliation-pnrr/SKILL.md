@@ -6,18 +6,18 @@ disable-model-invocation: true
 allowed-tools:
   - mcp__industrial-mcp-pro__server_capabilities
   - mcp__industrial-mcp-pro__openpnrr_list
-  - mcp__industrial-mcp-pro__openpnrr_get
+  - mcp__industrial-mcp-pro__openpnrr_search_progetti
   - mcp__industrial-mcp-pro__opencoesione_project_by_cup
   - mcp__industrial-mcp-pro__opencoesione_search_projects
-  - mcp__industrial-mcp-pro__anac_search_awards
+  - mcp__industrial-mcp-pro__anac_awards_by_cup
   - mcp__industrial-mcp-pro__anac_pnrr_datasets
   - mcp__industrial-mcp-pro__ted_search
   - mcp__industrial-mcp-free__server_capabilities
   - mcp__industrial-mcp-free__openpnrr_list
-  - mcp__industrial-mcp-free__openpnrr_get
+  - mcp__industrial-mcp-free__openpnrr_search_progetti
   - mcp__industrial-mcp-free__opencoesione_project_by_cup
   - mcp__industrial-mcp-free__opencoesione_search_projects
-  - mcp__industrial-mcp-free__anac_search_awards
+  - mcp__industrial-mcp-free__anac_awards_by_cup
   - mcp__industrial-mcp-free__anac_pnrr_datasets
   - mcp__industrial-mcp-free__ted_search
 ---
@@ -67,7 +67,7 @@ Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
 ### Sequenza di interrogazione
 
 1. **OpenPNRR** (OBBLIGATORIO):
-   - Per un CUP specifico: `openpnrr_get(endpoint="progetti", item_id="<cup>")`
+   - Per un CUP specifico: `openpnrr_search_progetti(cup="<cup>")` — esegue una scansione fino a 6 pagine interne; **non ritentare** se il CUP non è trovato (il tool restituisce `cup_filter_supported: false` in quel caso).
    - Per una misura PNRR: `openpnrr_list(endpoint="misure")`
    - Ricava: stato progetto, titolo, ente beneficiario.
 
@@ -78,9 +78,9 @@ Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
    - Confronta importi e stato con OpenPNRR.
 
 3. **ANAC CIG-level** (OBBLIGATORIO):
-   - `anac_pnrr_datasets()` per individuare i dataset PNRR disponibili.
-   - `anac_search_awards(query="<ente beneficiario>")` per trovare i contratti CIG correlati al CUP.
-   - Ricava: importo aggiudicato, aggiudicatario, data aggiudicazione.
+   - `anac_awards_by_cup(cup="<cup>")` — risolve il legame CUP→CIG dalla tabella `cup` di ANAC e restituisce tutti i contratti aggiudicati collegati.
+   - Ricava: CIG, importo aggiudicato, aggiudicatario, data aggiudicazione.
+   - **Nota cold start**: questa è la prima chiamata ANAC nella sequenza e scarica fino a 4 tabelle (~300 MB totali, 70-300 s a freddo). Le chiamate ANAC successive nella stessa conversazione leggono la cache e sono veloci. Se va in timeout, documenta in `## Dati non disponibili` e non ritentare.
 
 4. **TED** (CONDIZIONALE — solo se `importo_aggiudicato` ANAC ≥ soglia UE):
    - Soglie UE: servizi/forniture ≥ EUR 140 000; lavori ≥ EUR 5 404 000 (fonte unica e valori vigenti in [../shared/soglie-ue.md](../shared/soglie-ue.md)).

@@ -31,7 +31,8 @@ def test_pin_radar_skill_has_required_sections() -> None:
 
 def test_scheda_opportunita_skill_has_required_sections() -> None:
     t = _read_skill("scheda-opportunita")
-    assert "opencoesione_describe_dataset" in t
+    assert "opencoesione_project_by_cup" in t  # replaced catalog-only describe_dataset
+    assert "openpnrr_search_progetti" in t  # replaced broken openpnrr_get(item_id=cup)
     assert "Fonti" in t
     assert "Concorrenti probabili" in t or "Intelligence competitiva" in t
     assert "Audit trail" in t

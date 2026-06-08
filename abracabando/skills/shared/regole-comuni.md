@@ -36,6 +36,35 @@ Queste regole si applicano a tutte le skill del plugin:
 - L'output finale è sempre in italiano.
 - L'unico blocco di codice ammesso nell'output è quello della sezione `## Audit trail`.
 
+## Costo degli strumenti ANAC e gestione del cold start (free tier)
+
+Gli strumenti ANAC record-level scaricano snapshot mensili alla prima chiamata
+della conversazione e possono impiegare 70–300 secondi. Le tabelle sono
+**condivise** tra tutti gli strumenti ANAC: una volta che un qualsiasi strumento
+ANAC ha completato, gli altri leggono la cache e rispondono in pochi secondi.
+
+- **Numero di tabelle per strumento** (impatto sul cold start):
+  - 2 tabelle: `anac_sa_history`
+  - 3 tabelle: `anac_search_awards`, `anac_awards_by_piva`
+  - 4 tabelle: `anac_award_detail`, `anac_awards_by_cup`
+- **Non invocare mai due strumenti ANAC in parallelo**: la cache non ha lock
+  e due download simultanei della stessa tabella saturano il server. Attendi
+  che la prima chiamata ANAC completi prima di invocarne una seconda.
+- **In caso di timeout o errore su uno strumento ANAC**: emetti
+  `## Dati non disponibili` con il messaggio d'errore e prosegui con le
+  altre fonti già ottenute. Non ritentare: un retry paga di nuovo il cold
+  start e rischia di esaurire il budget della conversazione.
+
+## Costo nascosto degli strumenti multi-pagina
+
+- `openpnrr_search_progetti(cup=...)` esegue fino a **6 chiamate HTTP interne**
+  (scansione client-side di 6 pagine da 500 record). Non ritentare se il CUP
+  non è trovato: il tool lo segnala con `cup_filter_supported: false`.
+- `opencoesione_project_by_cup(cup=...)` scarica fino a **3 file Parquet** (uno
+  per ciclo 2021-2027, 2014-2020, 2007-2013) al primo utilizzo nella
+  conversazione, poi legge la cache. Trattalo come strumento a costo medio,
+  non leggero.
+
 ## Contenuto minimo dell'`## Audit trail`
 
 Ogni skill struttura l'audit trail a modo suo (vedi il `references/output-format.md`
