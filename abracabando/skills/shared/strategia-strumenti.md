@@ -24,8 +24,8 @@ di registrare `server_tier` nell'audit trail. È esente dal conteggio del budget
 ```json
 {
   "tier": "free",
-  "max_results_per_call": 5,
-  "max_total_calls": 10,
+  "max_results_per_call": 10,
+  "max_total_calls": 30,
   "blocked_tools": [],
   "data_freshness_days": 30
 }
@@ -35,8 +35,8 @@ di registrare `server_tier` nell'audit trail. È esente dal conteggio del budget
 
 | Campo | Free | Pro |
 |---|---|---|
-| `max_results_per_call` | `5` | `20` |
-| `max_total_calls` | `10` | `20` |
+| `max_results_per_call` | `10` | `50` |
+| `max_total_calls` | `30` | `200` |
 | `blocked_tools` | `[]` | `[]` |
 | `data_freshness_days` | `30` | `7` |
 
