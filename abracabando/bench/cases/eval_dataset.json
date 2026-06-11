@@ -676,6 +676,93 @@
         "D7": "judge"
       },
       "refresh_instructions": "Fixture frozen: risposta MCP hardcoded in bench/fixtures/3.7-003/calls.json con testo troncato e criteri parziali (confidenza Media attesa)."
+    },
+    {
+      "id": "3.8-001",
+      "skill": "trova-bando-compatibile",
+      "scenario": "happy-path",
+      "tier": "frozen",
+      "template": "3.8",
+      "prompt": "/trova-bando-compatibile azienda metalmeccanica CPV 44000000, Lombardia, contratti 200k–800k EUR",
+      "parameters": {
+        "cpv": "44000000",
+        "regione": "Lombardia",
+        "nuts_code": "ITC4",
+        "taglio_min": 200000,
+        "taglio_max": 800000
+      },
+      "snapshot_date": "2026-06-11",
+      "frozen_date": "2026-06-11",
+      "ttl_days": 90,
+      "ground_truth_records": [],
+      "empty_reason": "Fixture golden da catturare dopo primo run live — ground_truth_records da popolare con TED notice IDs e Consip bandi trovati.",
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "deterministic"
+      },
+      "refresh_instructions": "Riesegui con CPV 44000000 + Lombardia. Cattura i notice IDs TED e titoli Consip restituiti e aggiornali in ground_truth_records. Ricongela il fixture in bench/fixtures/3.8-001/."
+    },
+    {
+      "id": "3.8-002",
+      "skill": "trova-bando-compatibile",
+      "scenario": "missing-data",
+      "tier": "frozen",
+      "template": "3.8",
+      "prompt": "/trova-bando-compatibile CPV 99999999, nessuna regione specificata",
+      "parameters": {
+        "cpv": "99999999",
+        "regione": null,
+        "nuts_code": null
+      },
+      "snapshot_date": "2026-06-11",
+      "frozen_date": "2026-06-11",
+      "ttl_days": 180,
+      "ground_truth_records": [],
+      "empty_reason": "CPV inesistente: atteso zero risultati da tutte le fonti, output con ## Dati non disponibili e disclosure ambito temporale — nessun bando inventato.",
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "deterministic"
+      },
+      "refresh_instructions": "Fixture stabile (CPV fittizio). Verifica che la risposta contenga ## Dati non disponibili e NON contenga bandi inventati. Ricongela se il formato output cambia."
+    },
+    {
+      "id": "3.8-003",
+      "skill": "trova-bando-compatibile",
+      "scenario": "edge",
+      "tier": "frozen",
+      "template": "3.8",
+      "prompt": "/trova-bando-compatibile ATECO 25.11 (fabbricazione strutture metalliche), nessun CPV fornito, Piemonte",
+      "parameters": {
+        "ateco": "25.11",
+        "cpv": null,
+        "regione": "Piemonte",
+        "nuts_code": "ITC1"
+      },
+      "snapshot_date": "2026-06-11",
+      "frozen_date": "2026-06-11",
+      "ttl_days": 90,
+      "ground_truth_records": [],
+      "empty_reason": "ATECO senza CPV: attesa inferenza CPV con Media confidenza annotata in Audit trail. Ground truth da popolare dopo primo run live.",
+      "rubrics": {
+        "D1": "judge",
+        "D2": "deterministic",
+        "D3": "judge",
+        "D4": "deterministic",
+        "D5": "judge",
+        "D6": "judge",
+        "D7": "deterministic"
+      },
+      "refresh_instructions": "Riesegui con ATECO 25.11 + Piemonte. Verifica che: (1) audit trail contenga ateco_to_cpv_inference, (2) confidenza inferenza sia Media, (3) bandi restituiti abbiano CPV nella famiglia 44xxxxxx. Aggiorna ground_truth_records e ricongela."
     }
   ]
 }

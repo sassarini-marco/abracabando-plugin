@@ -76,13 +76,23 @@ Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
 
 2. **PIN TED** (CONDIZIONALE — esegui SE `sopra_soglia` è `true`):
    - `ted_pin_italy(cpv_codes=[<cpv>], nuts_region=<nuts_code>, limit=25)`
+     (`scope="ACTIVE"` è il default del tool — restituisce solo PIN attivi.)
    - Campo utile per lead time: `deadline` (scadenza consultazione PIN — proxy della data prevista bando).
    - Se `sopra_soglia` è `false`, ometti e segnala in `## Dati non disponibili`.
 
-3. **Milestone PNRR** (SEMPRE):
-   - Primary: `openpnrr_list(endpoint="scadenze", limit=25)` per recuperare milestone con date.
+3. **Milestone PNRR** (FACOLTATIVO — arricchimento secondario):
+   - Il PNRR è in fase di chiusura (scadenze principali 2026); ha valore residuale
+     di look-ahead per progetti ancora in fase di appalto.
+   - Interroga SOLO se: (a) il budget consente almeno 2 chiamate aggiuntive dopo
+     programmazione e PIN, **oppure** (b) l'utente nomina esplicitamente
+     PNRR / Next Generation EU / missioni M1–M6.
+   - Primary: `openpnrr_list(endpoint="scadenze", limit=25)` per milestone con date.
    - Fallback se scadenze non restituisce risultati rilevanti: `openpnrr_list(endpoint="misure")`.
    - Campo utile per lead time: `raw.data` o data presente nei campi dell'item (se disponibile).
+   - **Se ometti il PNRR**, annota in `## Metodologia`: "PNRR omesso: programma in
+     chiusura, basso valore look-ahead per questo CPV/regione." Non aprire
+     `## Dati non disponibili` solo per questa omissione.
+   - **Se interrogato e vuoto**, una riga in `## Metodologia` è sufficiente.
    - Nota nella sezione `## Metodologia` quali endpoint sono stati chiamati.
 
 ### Derivazione lead time
@@ -93,7 +103,7 @@ Il campo "Lead time" nella tabella è una **stima in mesi** derivata come segue:
 |-------|-------------|---------|
 | Programmazione regionale | `anno` | `(anno - anno_corrente) * 12` mesi; se `anno` = anno corrente → 0-6 mesi (stima generica) |
 | TED PIN | `deadline` | Mesi tra oggi e `deadline` (scadenza consultazione) |
-| PNRR scadenze | data da `raw` | Mesi tra oggi e la scadenza milestone più rilevante |
+| PNRR scadenze (se disponibile) | data da `raw` | Mesi tra oggi e la scadenza milestone più rilevante |
 
 Se nessuna data è disponibile, indica `"n.d."` nella colonna Lead time e usa **Bassa confidenza**.
 
@@ -112,4 +122,6 @@ Per la mappatura NUTS, consulta references/nuts-mapping.md (è un collegamento s
 - Usa il vocabolario di confidenza a tre livelli — mai percentuali o punteggi.
 - Non esporre i nomi degli strumenti MCP nell'output finale.
 - Le sezioni `## Metodologia`, `## Dati non disponibili` e `## Audit trail` sono sempre presenti.
+- Il PNRR può essere omesso: in tal caso `## Metodologia` deve contenere la motivazione dell'omissione.
+- `## Audit trail` include `ambito_temporale: "solo_aperti"` (programmazione e PIN restituiscono dati futuri per definizione).
 - `## Audit trail` contiene un **blocco fenced** (` ``` `), non una tabella markdown.

@@ -112,6 +112,7 @@ SKILL_TO_PREFIX = {
     "profilo-sa": "/profilo-sa ",
     "reconciliation-pnrr": "/reconciliation-pnrr ",
     "analisi-disciplinare": "/analisi-disciplinare ",
+    "trova-bando-compatibile": "/trova-bando-compatibile ",
 }
 SCENARIOS = {"happy-path", "missing-data", "edge"}
 

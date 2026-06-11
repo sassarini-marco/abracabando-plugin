@@ -51,6 +51,7 @@ TEMPLATE_TO_SKILL: dict[str, str] = {
     "3.5": "profilo-sa",
     "3.6": "reconciliation-pnrr",
     "3.7": "analisi-disciplinare",
+    "3.8": "trova-bando-compatibile",
 }
 
 # Layers that count as a clean pass for the hard gate.
@@ -518,7 +519,7 @@ def main() -> None:
     )
     ap.add_argument(
         "--template",
-        choices=["3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7"],
+        choices=["3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8"],
         help="Run only cases for this template.",
     )
     ap.add_argument(

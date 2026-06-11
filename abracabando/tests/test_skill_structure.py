@@ -141,3 +141,26 @@ def test_reconciliation_pnrr_skill_has_required_flags() -> None:
     for flag in ["CUP_ORFANO", "IMPORTO_SOPRA_FINANZIATO", "STATO_DIVERGENTE", "MANCATA_PUBBLICAZIONE_TED"]:
         assert flag in t, f"reconciliation-pnrr must contain flag marker '{flag}'"
     assert "Audit trail" in t
+
+
+def test_trova_bando_compatibile_structure() -> None:
+    t = _read_skill("trova-bando-compatibile")
+    # Core tools
+    assert "ted_search" in t
+    assert "consip_search_bandi" in t
+    assert "programmazione_search_biennale" in t
+    # Open-only default
+    assert "ambito_temporale" in t
+    assert "solo_aperti" in t
+    # CONSIP avviso handling
+    assert "layout_unrecognized" in t or "Avviso" in t
+    # Compatibility scoring labels
+    assert "Alta" in t and "Media" in t and "Bassa" in t
+    # Required invariant sections
+    assert "Dati letti il" in t
+    assert "Audit trail" in t
+    assert "## Fonti" in t or "Fonti" in t
+    # ATECO inference
+    assert "ateco_to_cpv_inference" in t or "ATECO" in t
+    # No PNRR in tool list
+    assert "openpnrr" not in t.lower().split("allowed-tools:")[1].split("---")[0] if "allowed-tools:" in t else True

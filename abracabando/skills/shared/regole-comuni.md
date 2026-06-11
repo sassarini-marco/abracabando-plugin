@@ -7,15 +7,44 @@ Queste regole si applicano a tutte le skill del plugin:
   vai dritto al documento. È tollerata al massimo una breve frase introduttiva,
   ma l'intestazione `Dati letti il` deve comparire entro le prime righe.
 
-- **Quando uno strumento restituisce un testo che inizia con `LIMITE_PIANO_FREE:`**,
-  interrompi immediatamente qualsiasi ulteriore chiamata e aggiungi la sezione
-  seguente all'output (non usare `## Dati non disponibili` per questo caso):
+- **Quando uno strumento restituisce un testo che inizia con `LIMITE_PIANO_FREE:`**
+  (oppure arriva come tool result con `isError: true` e contenuto che inizia con
+  quel prefisso), interrompi **immediatamente** qualsiasi ulteriore chiamata,
+  completa il documento con i dati **già ottenuti** e aggiungi questa sezione
+  (non usare `## Dati non disponibili` per questo caso):
 
   ```
   ## Limite piano free
 
   <testo restituito dallo strumento>
+
+  **Sezioni incomplete:** <elenca le fonti che non hai ancora interrogato,
+  es. "TED non interrogato, ANAC non interrogato">
+
+  **Cosa è già disponibile:** <elenca le sezioni del documento già compilate,
+  es. "Programmazione regionale presente, PIN TED presenti">
   ```
+
+  Il testo dello strumento contiene già: notifica del limite, conferma che i
+  dati già ottenuti rimangono validi, istruzioni di riavvio, e nota sulla cache
+  dei file ANAC/OpenCoesione. Non duplicare nessuno di questi contenuti.
+  Il valore aggiunto della skill è solo l'elenco specifico delle fonti incomplete
+  e di quelle già compilate, che lo strumento non può conoscere.
+
+- **Quando uno strumento Consip restituisce `"status": "layout_unrecognized"`**,
+  aggiungi la sezione seguente (prima di `## Dati non disponibili`) e prosegui
+  con le altre fonti disponibili:
+
+  ```
+  ## Avviso: dati Consip non disponibili
+  La pagina Consip non ha restituito dati strutturati riconoscibili (layout
+  probabilmente modificato). Le sezioni Consip di questo documento potrebbero
+  essere incomplete. Per i dati più aggiornati consulta direttamente
+  <search_url restituito dallo strumento>.
+  ```
+
+  Non emettere questo avviso per risultati vuoti normali (`count: 0` con
+  `status: "ok"`): zero risultati è un esito valido, non un errore tecnico.
 
 - **Quando manca un parametro obbligatorio** (es. nessun CIG/CUP/ente fornito
   e la skill non può avviare la ricerca senza), **chiedi all'utente** di

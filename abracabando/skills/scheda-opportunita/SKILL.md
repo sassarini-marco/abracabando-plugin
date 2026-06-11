@@ -67,11 +67,19 @@ Vedi [../shared/strategia-strumenti.md](../shared/strategia-strumenti.md).
 2. **TED** (CONDIZIONALE — esegui se importo stimato > soglia UE o se `ente` è noto):
    - Soglia UE di riferimento: EUR 140 000 per servizi/forniture, EUR 5 404 000 per lavori (fonte unica e valori vigenti in [../shared/soglie-ue.md](../shared/soglie-ue.md)). Se l'importo non è stimabile ma `ente` è noto, esegui comunque la query.
    - `ted_search(query="buyer-name=\"<ente>\" AND place-of-performance=ITA", limit=10)`
-   - Se errore (400, 500, timeout): documenta in `## Dati non disponibili` ed emetti scheda con dati disponibili.
+     (`scope="ACTIVE"` è il default — restituisce solo avvisi attivi. Passa
+     `scope="ALL"` solo se l'utente chiede esplicitamente gare chiuse/storiche.)
+   - **Nota:** i dati ANAC in questa skill sono per definizione storici (contratti
+     già aggiudicati). Servono per intelligence sull'incumbent — NON sono bandi
+     aperti a cui partecipare. Non presentarli come opportunità attive.
+   - Se errore TED (400, 500, timeout): documenta in `## Dati non disponibili` ed emetti scheda con dati disponibili.
 
 3. **OpenPNRR** (CONDIZIONALE — esegui solo se `cup` è disponibile):
    - `openpnrr_search_progetti(cup="<cup>")` — scansione fino a 6 pagine interne; **non ritentare** se non trovato.
    - Se zero risultati: documenta in `## Dati non disponibili`.
+   - **Nota:** l'assenza di dati PNRR NON riduce la qualità della scheda né blocca
+     l'output; il PNRR è arricchimento facoltativo per opportunità PNRR-finanziate.
+     La scheda è completa anche senza questa sezione.
 
 4. **OpenCoesione** (CONDIZIONALE — esegui solo se `cup` è disponibile):
    - Primary: `opencoesione_project_by_cup(cup="<cup>")` — restituisce `totale_finanziato`, `stato_procedurale`, beneficiario.
@@ -102,3 +110,4 @@ Se serve un esempio completo, consulta examples/example-output.md.
 - Non esporre i nomi degli strumenti MCP nell'output finale.
 - Le sezioni `## Dati non disponibili` e `## Audit trail` sono sempre presenti.
 - La sezione `## Intelligence competitiva` deve includere il disclaimer: "dati storici pubblici ANAC, non informazioni riservate".
+- `## Audit trail` include `ambito_temporale: "solo_aperti"` (default) o `"incluso_storico"` se l'utente ha chiesto esplicitamente gare chiuse.

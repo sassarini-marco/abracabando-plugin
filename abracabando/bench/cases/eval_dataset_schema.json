@@ -111,7 +111,8 @@
             "digest-pregara",
             "profilo-sa",
             "reconciliation-pnrr",
-            "analisi-disciplinare"
+            "analisi-disciplinare",
+            "trova-bando-compatibile"
           ],
           "description": "Primary key: the skill slug this case exercises."
         },
@@ -146,7 +147,7 @@
         },
         "template": {
           "type": "string",
-          "enum": ["3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7"],
+          "enum": ["3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8"],
           "description": "Prompt template identifier (one per skill)."
         },
         "prompt": {

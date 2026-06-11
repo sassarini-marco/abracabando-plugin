@@ -136,7 +136,7 @@ Verifica che i criteri di valutazione siano fondati sul documento effettivamente
 - **1**: `## Dati non disponibili` contiene la motivazione dell'errore **e** NON ci sono punteggi inventati in `## Criteri di valutazione`
 - **0**: punteggi numerici presenti nonostante il documento non sia stato letto; oppure manca la sezione `## Dati non disponibili`
 
-- **-1**: template `3.1`, `3.2`, `3.3`, `3.4`, `3.5`, `3.6`
+- **-1**: template `3.1`, `3.2`, `3.3`, `3.4`, `3.5`, `3.6`, `3.8`
 
 **Regola**: mai assegnare `1` se nella risposta compaiono punteggi specifici (es. "70 punti") non tracciabili al testo del documento.
 

@@ -51,10 +51,10 @@ bench/
 
 ```bash
 # Check for stale cases first
-python bench/eval_runner.py --check-staleness
+python3 bench/eval_runner.py --check-staleness
 
 # Run all cases — frozen tier (deterministic, no API key)
-python bench/eval_runner.py
+python3 bench/eval_runner.py
 
 # Run one template
 python bench/eval_runner.py --template 3.1

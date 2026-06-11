@@ -4,6 +4,74 @@
 
 ## [Unreleased]
 
+### Added
+
+- **New skill `trova-bando-compatibile`** (`skills/trova-bando-compatibile/`):
+  given a company/factory profile (CPV or ATECO sector, region, contract size
+  range, certifications), finds open compatible public tenders and ranks them by
+  compatibility. Each bando is scored across four dimensions — CPV match,
+  geography, contract size, and eligibility — using Alta/Media/Bassa labels;
+  the overall score is the modal value with explicit named warnings for any Bassa
+  dimension. ATECO codes are mapped to CPV by model inference (labelled Media
+  confidenza in the audit trail). PNRR sources are excluded (programme closing).
+  Includes `references/output-format.md`, `references/nuts-mapping.md` symlink,
+  and `examples/example-output.md`.
+
+- **Eval harness extended for `trova-bando-compatibile`** (`bench/`): template
+  `3.8` and skill slug added to `eval_dataset_schema.json` enums,
+  `TEMPLATE_TO_SKILL` dict and `--template` argparse choices in `eval_runner.py`,
+  and D7 `-1` (not-applicable) list in `judge_prompt_v1.md`. Three frozen eval
+  cases added (`3.8-001` happy-path, `3.8-002` missing-data, `3.8-003` edge /
+  ATECO-only). `SKILL_TO_PREFIX` in `tests/test_eval_dataset.py` and a new
+  `test_trova_bando_compatibile_structure()` function in
+  `tests/test_skill_structure.py` updated accordingly.
+
+### Fixed
+
+- **CONSIP silent failure now surfaced to the user** (`skills/shared/regole-comuni.md`,
+  `skills/consultazioni-radar/SKILL.md`): the MCP `consip_*` tools previously
+  returned an empty list whether the Consip website failed structurally or simply
+  had no matching records. Skills now check the new `status` field returned by the
+  MCP and emit `## Avviso: dati Consip non disponibili` (with a direct link to
+  consip.it) when `status: "layout_unrecognized"` — distinct from a legitimate
+  zero-result response which produces no avviso.
+
+- **`test_mcp_json_has_both_servers` wrong type assertion** (`tests/test_manifests.py`):
+  the test expected `"type": "streamable-http"` but `.mcp.json` correctly uses
+  `"type": "http"` (the current Claude Code MCP transport identifier). Updated
+  the assertion to match.
+
+### Changed
+
+- **Free-tier limit message enriched** (`skills/shared/regole-comuni.md`,
+  `skills/shared/strategia-strumenti.md`): the `## Limite piano free` section
+  template now instructs the skill to list which sources were not yet queried
+  ("Sezioni incomplete") and which are already compiled ("Cosa è già disponibile"),
+  giving the user actionable context for the next session. Added a note that the
+  `LIMITE_PIANO_FREE:` sentinel may arrive as `isError: true` — the prefix in the
+  content is the determinant, not the error flag.
+
+- **Open-bando default documented per skill** (`skills/consultazioni-radar/SKILL.md`,
+  `skills/scheda-opportunita/SKILL.md`, `skills/digest-pregara/SKILL.md`,
+  `skills/pin-radar/SKILL.md`): discovery skills now explicitly default to open
+  opportunities only (`ted_search` scope is already `ACTIVE` at the MCP layer;
+  `consip_search_bandi` now passes `stage="bando"` server-side to filter open
+  bandi only). Each skill adds `ambito_temporale: "solo_aperti"` to its audit
+  trail and a disclosure line to the output. Historical/closed data is available
+  on explicit user request. Changed per-skill, not in the shared file, to avoid
+  corrupting skills that legitimately need historical ANAC award data
+  (`scheda-opportunita`, `profilo-sa`). ANAC awards are clarified as historical
+  by definition and not presented as open bandi.
+
+- **PNRR deprioritised in `digest-pregara`** (`skills/digest-pregara/SKILL.md`):
+  the PNRR milestone step changed from **SEMPRE** to **FACOLTATIVO**. The PNRR
+  programme is closing (main deadlines 2026); its look-ahead value is now
+  secondary to regional programming and TED PIN. The skill interrogates PNRR only
+  when budget allows after the primary sources, or when the user explicitly mentions
+  PNRR/Next Generation EU/missions M1–M6. Omissions are noted in `## Metodologia`
+  rather than flagged as `## Dati non disponibili`. `scheda-opportunita` adds a
+  note that PNRR absence does not block or reduce output quality.
+
 ### Changed
 
 - **`bench/` filesystem restructure** — directories reorganised for open-repo clarity:

@@ -128,6 +128,7 @@ Se serve un esempio completo, consulta examples/example-output.md.
 - Una sezione senza risultati viene omessa.
 - `## Dati non disponibili` e `## Audit trail` sono sempre presenti.
 - `## Audit trail` contiene un **blocco fenced** (` ``` `), non una tabella markdown.
+- `## Audit trail` include `ambito_temporale: "solo_aperti"` (`ted_pin_italy` restituisce PIN ACTIVE per default).
 - Ogni PIN citato deve riportare: numero di pubblicazione TED (`NNNNNN-YYYY`), URL fonte restituito dallo strumento, data di lettura.
 - Non esporre i nomi degli strumenti MCP nell'output finale.
 - Se TED restituisce zero risultati, emetti comunque il documento completo con intestazione, sezioni vuote, `## Dati non disponibili` e `## Audit trail`.

@@ -4,7 +4,10 @@
 
 Il server applica i limiti di budget autonomamente lato server: quando il
 budget è esaurito restituisce un messaggio `LIMITE_PIANO_FREE:` che la skill
-deve gestire come descritto in `regole-comuni.md`.
+deve gestire come descritto in `regole-comuni.md`. Questo messaggio può
+arrivare come tool result normale **oppure** come tool result con `isError: true`
+— il prefisso `LIMITE_PIANO_FREE:` nel contenuto è il segnale determinante,
+indipendentemente dal flag `isError`.
 
 La probe è comunque consigliata perché permette alla skill di pianificare in
 anticipo l'utilizzo del budget (es. dare priorità alle fonti più rilevanti) e

@@ -61,11 +61,30 @@ altri: questa skill copre solo il perimetro Consip. Se l'utente chiede un
 confronto con ANAC o TED, dichiara il limite in `## Dati non disponibili` e
 suggerisci di usare la skill `scheda-opportunita` o `pin-radar`.
 
+### Ambito temporale: solo opportunità aperte per default
+
+Per default, questa skill restituisce solo consultazioni e bandi ancora aperti
+alla data odierna. Includi risultati chiusi/storici solo se l'utente li richiede
+esplicitamente (es. "incluse gare chiuse", "storico", "già aggiudicate").
+
+Aggiungi questa riga all'inizio dell'output (subito dopo `Dati letti il`):
+> Ambito: solo opportunità aperte alla data odierna. Per includere gare
+> storiche/chiuse, ripeti la richiesta con "incluse gare chiuse".
+
+Registra nell'`## Audit trail`: `ambito_temporale: "solo_aperti"` oppure
+`"incluso_storico"` se l'utente ha richiesto esplicitamente lo storico.
+
 ### Sequenza di interrogazione
 
 Interroga sempre, in questo ordine:
 1. consultazioni di mercato (`consip_search_consultazioni`);
-2. bandi / RdA (`consip_search_bandi`).
+2. bandi / RdA (`consip_search_bandi(query=<query>, stage="bando")`) — il
+   parametro `stage="bando"` filtra lato server ai soli bandi formalmente aperti,
+   escludendo annunci, aggiudicazioni, sospesi e revocati. Ometti `stage` solo
+   se l'utente chiede esplicitamente anche le altre fasi.
+
+Controlla il campo `status` del risultato: se `"layout_unrecognized"`, applica
+la regola `## Avviso: dati Consip non disponibili` di `regole-comuni.md`.
 
 Usa la stessa query base per entrambi.
 
@@ -153,3 +172,4 @@ Se serve un esempio completo, consulta examples/example-output.md.
 - Se esistono risultati oltre il limite di analisi estesa, `## Altri risultati trovati ma non analizzati in esteso` è obbligatoria.
 - Non esporre i nomi degli strumenti MCP nell'output finale.
 - Se consultazioni e bandi restituiscono entrambi zero risultati, emetti comunque il documento completo con intestazione, `## Dati non disponibili` e `## Audit trail`.
+- `## Audit trail` include sempre `ambito_temporale: "solo_aperti" | "incluso_storico"`.
