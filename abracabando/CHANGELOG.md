@@ -2,6 +2,24 @@
 
 ---
 
+## [0.2.1] — 2026-06-12
+
+### Added
+
+- **Automated plugin packaging via GitHub Actions** (`.github/workflows/release.yml`):
+  triggers on release publish, builds the plugin zip from `abracabando/` directory
+  (excluding tests and bench), uploads it as a release asset, and commits the
+  built package to `dist/` in the repository. Version is extracted from git tag.
+
+- **Local build script** (`scripts/build-plugin.sh`): builds the plugin package
+  locally, extracting version from `.claude-plugin/plugin.json`. Validates the
+  package structure before zipping.
+
+- **Platform badges**: added Claude Desktop and Claude Cowork badges to marketplace
+  README.
+
+---
+
 ## [0.2.0] — 2026-06-12
 
 ### Added

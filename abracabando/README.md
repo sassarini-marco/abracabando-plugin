@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/sassarini-marco/abracabando-plugin/releases)
+[![Version](https://img.shields.io/badge/version-0.2.1-blue)](https://github.com/sassarini-marco/abracabando-plugin/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Claude%20Code-orange)](https://claude.ai/code)
 

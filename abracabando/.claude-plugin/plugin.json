@@ -1,7 +1,7 @@
 {
   "name": "abracabando",
   "displayName": "AbracaBando",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Intelligence sulla spesa pubblica italiana direttamente in Claude — ANAC, TED, OpenCoesione, OpenPNRR e Consip in linguaggio naturale. Output strutturati in italiano con piena provenance delle fonti.",
   "author": { "name": "Marco Sassarini & Federico Cesarini", "email": "abracabando.ai@gmail.com" },
   "homepage": "https://github.com/sassarini-marco/abracabando-plugin",

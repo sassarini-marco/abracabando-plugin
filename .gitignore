@@ -17,6 +17,5 @@ __pycache__/
 # Local Claude Code user settings (never commit)
 .claude/
 
-# Track dist/ directory for plugin releases
-!dist/
-!dist/*.zip
+# Plugin distribution packages (built by GitHub Actions on release)
+dist/
