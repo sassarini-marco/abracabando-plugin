@@ -1,6 +1,8 @@
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](https://github.com/sassarini-marco/abracabando-plugin/releases)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/sassarini-marco/abracabando-plugin/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Claude%20Code-orange)](https://claude.ai/code)
+[![Claude Desktop](https://img.shields.io/badge/Claude-Desktop-purple)](https://claude.ai/download)
+[![Claude Cowork](https://img.shields.io/badge/Claude-Cowork-indigo)](https://claude.ai/cowork)
 
 Marketplace — AbracaBando
 
