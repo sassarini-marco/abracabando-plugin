@@ -63,17 +63,3 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
-
-      - name: Commit dist to repository
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          git add dist/
-
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Add release package ${{ steps.version.outputs.version }} to dist/"
-            git push origin main
-          fi
