@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](https://github.com/sassarini-marco/abracabando-plugin/releases)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/sassarini-marco/abracabando-plugin/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Claude%20Code-orange)](https://claude.ai/code)
 
@@ -50,11 +50,12 @@ Nessuna API key. Il server dati è ospitato — nessuna installazione aggiuntiva
 
 ---
 
-## Le 7 skill
+## Le 8 skill
 
 | Skill | Cosa fa |
 |---|---|
 | `/abracabando:analisi-disciplinare <URL> [CIG]` | Scarica e analizza un disciplinare PDF: tabella criteri completa con verifica della somma, requisiti di partecipazione, formula economica — tutto estratto dal documento, niente inventato |
+| `/abracabando:trova-bando-compatibile <profilo azienda>` | Trova bandi pubblici aperti compatibili con il profilo di un'azienda (settore CPV/ATECO, regione, dimensione contratti, certificazioni) e li classifica per compatibilità |
 | `/abracabando:pin-radar <CPV / regione>` | Trova gli avvisi di preinformazione TED attivi per l'Italia: gare probabili nei prossimi mesi, prima che il bando ufficiale venga pubblicato |
 | `/abracabando:scheda-opportunita <CIG \| CUP \| ente>` | Scheda intelligence completa su un'opportunità: storico aggiudicazioni ANAC, finanziamento PNRR, fondi OpenCoesione, bandi TED — tutto in un documento |
 | `/abracabando:profilo-sa <stazione appaltante>` | Radiografia di una stazione appaltante: volumi per anno, CPV prevalenti, fornitori storici, importo medio, stagionalità degli acquisti |
@@ -66,6 +67,8 @@ Nessuna API key. Il server dati è ospitato — nessuna installazione aggiuntiva
 
 ```
 /abracabando:analisi-disciplinare https://www.agcm.it/.../disciplinare.pdf CIG B16EFD0453
+
+/abracabando:trova-bando-compatibile azienda metalmeccanica Veneto CPV 42900000 contratti 100k-500k ISO9001
 
 /abracabando:pin-radar servizi informatici (CPV 72000000) probabili gare entro 6 mesi Italia
 
