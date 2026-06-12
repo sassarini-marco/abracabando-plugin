@@ -2,7 +2,6 @@
 name: consultazioni-radar
 description: Monitora consultazioni di mercato, avvisi esplorativi e bandi Consip rilevanti per un settore o una tecnologia, e produce una nota decisionale con priorità operative, risultati analizzati in esteso, risultati aggiuntivi sintetici e audit trail. Usa questa skill ogni volta che l'utente parla di consultazioni esplorative o preliminari di mercato, avvisi esplorativi, "call for input" Consip, RdA, bandi o accordi quadro Consip aperti, monitoraggio di forniture o opportunità Consip su un settore/categoria/vendor — anche se non nomina esplicitamente "Consip" o "consultazione".
 argument-hint: "<settore> [tecnologia]"
-disable-model-invocation: true
 allowed-tools:
   - mcp__industrial-mcp-pro__server_capabilities
   - mcp__industrial-mcp-pro__consip_search_consultazioni

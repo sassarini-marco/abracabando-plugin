@@ -2,6 +2,20 @@
 
 ---
 
+## [0.3.0] — 2026-06-12
+
+### Fixed
+
+- **Skills now auto-invoke correctly**: removed `disable-model-invocation: true` from
+  all 8 skill frontmatter blocks. This flag was preventing Claude from auto-invoking
+  skills when user requests matched the trigger patterns in the `description` field.
+  Previously, Claude bypassed the skill wrapper and called MCP tools directly, losing
+  the Italian markdown output, provenance rules, confidence scoring, and audit trail
+  format. Skills now trigger automatically on natural-language requests (e.g.,
+  "quale gara fa per la mia azienda" → `/trova-bando-compatibile`).
+
+---
+
 ## [0.2.2] — 2026-06-12
 
 ### Added

@@ -2,7 +2,6 @@
 name: trova-bando-compatibile
 description: "Data il profilo di un'azienda o stabilimento (settore CPV o ATECO, regione, dimensione, taglio contratti, certificazioni), trova i bandi pubblici aperti compatibili e li classifica per compatibilità. Usa questa skill ogni volta che l'utente chiede: quale gara fa per la mia azienda, bandi compatibili con il mio profilo, trova gare aperte per [settore], gare adatte a un'azienda [ATECO/settore], opportunità di gara per una fabbrica/PMI di [settore], quali appalti posso vincere — anche se non nomina esplicitamente CPV o ATECO."
 argument-hint: "<CPV|ATECO> [regione] [taglio EUR min-max] [certificazioni]"
-disable-model-invocation: true
 allowed-tools:
   - mcp__industrial-mcp-pro__server_capabilities
   - mcp__industrial-mcp-pro__ted_search

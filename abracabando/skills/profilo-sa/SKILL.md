@@ -2,7 +2,6 @@
 name: profilo-sa
 description: "Genera un profilo quantitativo di una stazione appaltante basato sui dati ANAC, con volume affidamenti, top CPV, top fornitori, stagionalità e anomalie ricorrenti. Usa questa skill ogni volta che l'utente vuole capire come compra un ente pubblico (Comune, ASL, Regione, ministero, società in house): chi sono i suoi fornitori abituali, quanto e cosa affida, in quali mesi, se ci sono concentrazioni o affidamenti diretti ripetuti — anche se chiede solo \"che gare fa l'ente X\" o \"chi vince con il Comune di Y\"."
 argument-hint: "<nome ente> [CF ente]"
-disable-model-invocation: true
 allowed-tools:
   - mcp__industrial-mcp-pro__server_capabilities
   - mcp__industrial-mcp-pro__anac_sa_history

@@ -2,7 +2,6 @@
 name: digest-pregara
 description: Analizza il mercato di pre-gara per un settore CPV o una regione, incrociando programmazione regionale biennale, TED PIN e PNRR, e produce un digest in italiano con piena provenienza e livelli di confidenza. Usa questa skill ogni volta che l'utente vuole una panoramica delle opportunità in arrivo in un settore o regione, chiede "cosa bolle in pentola" o "cosa sta per uscire", vuole un quadro di pre-gara con lead time e confidenza incrociando programmazione, avvisi TED e fondi PNRR — anche se nomina una sola di queste fonti.
 argument-hint: "[CPV] [regione] [anno]"
-disable-model-invocation: true
 allowed-tools:
   - mcp__industrial-mcp-pro__server_capabilities
   - mcp__industrial-mcp-pro__programmazione_search_biennale

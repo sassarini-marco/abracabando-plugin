@@ -2,7 +2,6 @@
 name: analisi-disciplinare
 description: Scarica e analizza un disciplinare o capitolato tecnico di gara (PDF o HTML), estrae i criteri di valutazione (punteggi offerta tecnica/economica), identifica i requisiti di partecipazione e produce una scheda strutturata in italiano con piena provenance. Usa questa skill ogni volta che l'utente ha l'URL di un documento di gara e vuole capire come viene valutata l'offerta, quanti punti valgono i singoli criteri tecnici/economici, o se l'azienda può partecipare — anche se chiede "analizza questo capitolato", "quanti punti vale l'offerta tecnica?", "dimmi i requisiti di partecipazione".
 argument-hint: "<URL documento> [CIG per contesto]"
-disable-model-invocation: true
 allowed-tools:
   - mcp__industrial-mcp-pro__server_capabilities
   - mcp__industrial-mcp-pro__document_fetch_text

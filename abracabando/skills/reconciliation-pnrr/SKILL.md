@@ -2,7 +2,6 @@
 name: reconciliation-pnrr
 description: "Riconcilia i dati PNRR tra OpenPNRR, OpenCoesione e ANAC per uno o più CUP e produce un report con flag di anomalia standardizzati. Usa questa skill ogni volta che l'utente vuole verificare se le fonti PNRR sono allineate su un CUP o una misura: divergenze di importo tra OpenPNRR e OpenCoesione, stati di avanzamento incoerenti, importi contrattuali sopra il finanziato, contratti sopra-soglia senza avviso TED, CUP orfani — anche se chiede solo \"i dati di questo CUP tornano?\" o \"perché gli importi non coincidono?\"."
 argument-hint: "<CUP> [misura_pnrr]"
-disable-model-invocation: true
 allowed-tools:
   - mcp__industrial-mcp-pro__server_capabilities
   - mcp__industrial-mcp-pro__openpnrr_list
