@@ -7,9 +7,10 @@
 ### Added
 
 - **Automated plugin packaging via GitHub Actions** (`.github/workflows/release.yml`):
-  triggers on release publish, builds the plugin zip from `abracabando/` directory
-  (excluding tests and bench), uploads it as a release asset, and commits the
-  built package to `dist/` in the repository. Version is extracted from git tag.
+  triggers on git tag push (`v*`), builds the plugin zip from `abracabando/` directory
+  (excluding tests and bench), creates a GitHub release with the zip attached, and
+  commits the built package to `dist/` in the repository. Version is extracted from
+  git tag.
 
 - **Local build script** (`scripts/build-plugin.sh`): builds the plugin package
   locally, extracting version from `.claude-plugin/plugin.json`. Validates the

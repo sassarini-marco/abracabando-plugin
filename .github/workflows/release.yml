@@ -1,8 +1,9 @@
 name: Build and Release Plugin Package
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
@@ -18,7 +19,7 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          # Remove 'v' prefix if present (v0.2.0 → 0.2.0)
+          # Remove 'v' prefix if present (v0.2.1 → 0.2.1)
           VERSION="${GITHUB_REF_NAME#v}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
@@ -54,14 +55,14 @@ jobs:
           echo "Package created: dist/$PACKAGE_NAME.zip"
           ls -lh "$GITHUB_WORKSPACE/dist/$PACKAGE_NAME.zip"
 
-      - name: Upload release asset
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PACKAGE_NAME="abracabando-${{ steps.version.outputs.version }}.zip"
-          gh release upload "$GITHUB_REF_NAME" \
-            "dist/$PACKAGE_NAME" \
-            --clobber
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/abracabando-${{ steps.version.outputs.version }}.zip
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false
+          generate_release_notes: true
 
       - name: Commit dist to repository
         run: |
