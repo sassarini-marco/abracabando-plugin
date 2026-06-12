@@ -10,7 +10,7 @@
       "email": "abracabando.ai@gmail.com"
     }
   ],
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Natural-language access to the Italian public spending ecosystem. Query ANAC, TED, OpenCoesione, OpenPNRR, and regional planning datasets; receive professional-quality Italian-language outputs with full provenance.",
   "license": "MIT",
   "skills": "skills/",
